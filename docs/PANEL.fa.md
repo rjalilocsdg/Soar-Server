@@ -1,4 +1,4 @@
-# نصب قدم‌به‌قدم پنل WhiteDNS با Soar و Cotten — نسخهٔ 0.6.0
+# نصب قدم‌به‌قدم پنل WhiteDNS با Soar، Cotten، StormDNS و MasterDNS — نسخهٔ 0.6.1-beta1
 
 این راهنما از آماده‌کردن DNS تا ورود به پنل و اولین اتصال گوشی را توضیح می‌دهد. دستورها را در ترمینال SSH **سرور** اجرا کنید؛ فقط دستور تونل SSH که جداگانه مشخص شده، روی کامپیوتر شما اجرا می‌شود.
 
@@ -65,7 +65,7 @@ apt-get install -y curl
 سپس نصب‌کنندهٔ پنل را اجرا کنید:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/WhiteDNS/Soar-Server/main/panel-setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/rjalilocsdg/Soar-Server/main/panel-setup.sh)
 ```
 
 هر پاسخ را بنویسید و Enter بزنید. مقدار داخل `[...]` پیش‌فرض است؛ Enter خالی آن را انتخاب می‌کند. پیام‌های `[OK]` و گزارش پیشرفت پاسخ نمی‌خواهند.

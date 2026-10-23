@@ -53,16 +53,16 @@ To install the custom Linux amd64 bundle on a supported server, upload the
 archive and run these commands in an interactive SSH terminal:
 
 ```sh
-tar -xzf soar-panel-0.6.0-linux-amd64.tar.gz
-cd soar-panel-0.6.0-linux-amd64
+tar -xzf soar-panel-0.6.1-beta1-linux-amd64.tar.gz
+cd soar-panel-0.6.1-beta1-linux-amd64
 sudo bash panel-install.sh
 ```
 
 The existing installer preserves panel accounts, keys and usage. After
 upgrading, edit an account's engine selection to enable the new routes,
-then refresh its subscription in the client. Until these changes are
-published upstream, use this custom bundle for upgrades: upstream setup
-commands and the panel updater fetch upstream releases.
+then refresh its subscription in the client. This fork’s one-command installer
+and in-panel updater both use releases from `rjalilocsdg/Soar-Server`. The
+original WhiteDNS installer continues to install the original upstream project.
 
 Pinned MIT-licensed engine sources are checked into `third_party/StormDNS`
 and `third_party/MasterDnsVPN`. Each directory retains its original license,

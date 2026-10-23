@@ -14,13 +14,14 @@ import sys
 import tarfile
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION="0.6.0"
+VERSION="0.6.1-beta1"
 NAME=f"soar-panel-{VERSION}-linux-amd64"
 
 def verify_version():
     for path, pattern in [
         ("internal/panel/releases.go", r'var Version = "([^"]+)"'),
         ("panel-install.sh", r"^PANEL_VERSION=(\S+)$"),
+        ("panel-setup.sh", r"^PANEL_RELEASE=(\S+)$"),
     ]:
         match = re.search(pattern, (ROOT/path).read_text(encoding="utf8"), re.MULTILINE)
         if match is None or match[1] != VERSION:

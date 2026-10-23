@@ -1,5 +1,8 @@
 # Install and use WhiteDNS Soar Panel
 
+This fork’s **0.6.1-beta1** preview adds StormDNS and MasterDnsVPN alongside
+Soar and CottenDNS. Installation and in-panel updates use this fork’s releases.
+
 WhiteDNS builds the management panel and installer. The tunnel engine is
 [Lantern Soar](https://github.com/getlantern/soar), alongside the compatible
 [WhiteDNS CottenDNS fork](https://github.com/WhiteDNS/CottenDNS). The dashboard uses original
@@ -33,7 +36,7 @@ DNS delegation; if another service owns port 53, resolve that conflict first.
 Connect over SSH and paste:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/WhiteDNS/Soar-Server/main/panel-setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/rjalilocsdg/Soar-Server/main/panel-setup.sh)
 ```
 
 If curl is missing:
@@ -45,7 +48,7 @@ sudo apt-get install -y curl
 
 Follow the numbered English prompts. Enter your delegated zone, for example
 `soar.example.com`. Pick an administrator username and strong password. The
-installer downloads the pinned stable release, verifies its checksum, installs
+installer downloads the pinned preview release, verifies its checksum, installs
 the services and prints the complete login URL. Save that URL: its random path
 is required. The bare IP/domain intentionally does not show a login page.
 

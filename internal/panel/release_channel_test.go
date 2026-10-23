@@ -3,10 +3,10 @@ package panel
 import "testing"
 
 func releaseFixture(version string, prerelease bool) PanelRelease {
-	r := PanelRelease{Tag: "panel-v" + version, URL: "https://github.com/WhiteDNS/Soar-Server/releases/tag/panel-v" + version, Prerelease: prerelease}
+	r := PanelRelease{Tag: "panel-v" + version, URL: "https://github.com/" + ReleaseRepository + "/releases/tag/panel-v" + version, Prerelease: prerelease}
 	for _, suffix := range []string{".tar.gz", ".tar.gz.sha256"} {
 		name := "soar-panel-" + version + "-linux-amd64" + suffix
-		r.Assets = append(r.Assets, ReleaseAsset{Name: name, URL: "https://github.com/WhiteDNS/Soar-Server/releases/download/" + r.Tag + "/" + name, Size: 100})
+		r.Assets = append(r.Assets, ReleaseAsset{Name: name, URL: "https://github.com/" + ReleaseRepository + "/releases/download/" + r.Tag + "/" + name, Size: 100})
 	}
 	return r
 }
@@ -32,5 +32,16 @@ func TestBetaCanGraduateToStable(t *testing.T) {
 	r, err = selectPanelRelease([]PanelRelease{releaseFixture("0.3.0-beta1", true)}, "0.2.0-beta10")
 	if err != nil || r.Tag != "panel-v0.3.0-beta1" {
 		t.Fatal("existing beta channel changed", r.Tag, err)
+	}
+}
+
+func TestForkReleaseRejectsOtherRepositoryAssets(t *testing.T) {
+	r := releaseFixture(Version, true)
+	if err := validatePanelRelease(r, Version); err != nil {
+		t.Fatal("fork preview rejected", err)
+	}
+	r.Assets[0].URL = "https://github.com/WhiteDNS/Soar-Server/releases/download/" + r.Tag + "/" + r.Assets[0].Name
+	if err := validatePanelRelease(r, Version); err == nil {
+		t.Fatal("accepted a bundle from a different release repository")
 	}
 }

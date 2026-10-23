@@ -22,12 +22,14 @@ class PanelReleaseTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "internal/panel").mkdir(parents=True)
-            for stale in ("installer", "runtime"):
+            for stale in ("installer", "runtime", "bootstrap"):
                 with self.subTest(stale=stale):
                     runtime = "0.0.0" if stale == "runtime" else bundle.VERSION
                     installer = "0.0.0" if stale == "installer" else bundle.VERSION
+                    bootstrap = "0.0.0" if stale == "bootstrap" else bundle.VERSION
                     (root / "internal/panel/releases.go").write_text(f'var Version = "{runtime}"\n')
                     (root / "panel-install.sh").write_text(f"PANEL_VERSION={installer}\n")
+                    (root / "panel-setup.sh").write_text(f"PANEL_RELEASE={bootstrap}\n")
                     with patch.object(bundle, "ROOT", root), self.assertRaises(RuntimeError):
                         bundle.verify_version()
 

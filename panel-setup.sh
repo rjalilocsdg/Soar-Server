@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Stable management panel; keep stdin attached to the user's SSH terminal.
+# Multi-engine preview panel; keep stdin attached to the user's SSH terminal.
 set -Eeuo pipefail
 export LC_ALL=C
 umask 077
 # Advance only after the matching release archive and checksum are verified.
-PANEL_RELEASE=0.6.0
-PANEL_REPO=WhiteDNS/Soar-Server
+PANEL_RELEASE=0.6.1-beta1
+PANEL_REPO=rjalilocsdg/Soar-Server
 PANEL_WORK=
 fail(){ printf '[ERROR] %s\n' "$*" >&2;exit 1; }
 cleanup(){ [[ -z $PANEL_WORK ]] || rm -rf -- "$PANEL_WORK"; }
@@ -30,7 +30,7 @@ main(){
  for command in curl tar sha256sum mktemp awk;do command -v "$command" >/dev/null || fail "Missing $command. Install curl/coreutils/tar, then retry.";done
  PANEL_WORK=$(mktemp -d "${TMPDIR:-/tmp}/whitedns-soar-panel.XXXXXXXX");trap cleanup EXIT
  asset="soar-panel-$PANEL_RELEASE-linux-amd64.tar.gz";base="https://github.com/$PANEL_REPO/releases/download/panel-v$PANEL_RELEASE"
- printf 'WhiteDNS Soar Panel %s - STABLE\nDownloading the pinned release and its SHA-256 checksum...\n' "$PANEL_RELEASE"
+ printf 'WhiteDNS Soar Panel %s - MULTI-ENGINE PREVIEW\nDownloading the pinned release and its SHA-256 checksum...\n' "$PANEL_RELEASE"
  for member in "$asset" "$asset.sha256";do curl --fail --show-error --silent --location --retry 3 --connect-timeout 15 --max-time 180 --proto '=https' --proto-redir '=https' "$base/$member" -o "$PANEL_WORK/$member" || fail 'Download failed. Check GitHub access and retry.';done
  valid_checksum "$PANEL_WORK/$asset.sha256" "$PANEL_WORK/$asset" "$asset" || fail 'Checksum mismatch. Installation was not started.'
  tar -tzf "$PANEL_WORK/$asset" > "$PANEL_WORK/members" || fail 'Invalid archive.'

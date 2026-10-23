@@ -1,15 +1,15 @@
 # WhiteDNS Soar Panel
 
-Development upgrade: [four-engine integration](docs/MULTI-ENGINE.md) adds
+Multi-engine preview **0.6.1-beta1**: [four-engine integration](docs/MULTI-ENGINE.md) adds
 StormDNS and MasterDnsVPN alongside Soar and Cotten, with shared account
-limits and subscriptions. Build this checkout to use it; upstream release
-installation commands below still install the published upstream release.
+limits and subscriptions. The one-command installer below installs this fork’s
+versioned preview release and verifies its checksums.
 
 [English installation guide](docs/PANEL.en.md) · [راهنمای فارسی](docs/PANEL.fa.md)
 
 [دامنه‌های جایگزین تونل و پنل](docs/DOMAINS.fa.md): حداکثر ۸ دامنه برای هر بخش، بدون ساخت دوبارهٔ حساب‌ها یا تغییر سهمیه. نصب اولیه همچنان فقط یک دامنه می‌خواهد.
 
-پنل مدیریت سرور **WhiteDNS 0.6.0** با موتورهای **Soar و Cotten** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64**.
+پنل مدیریت سرور **WhiteDNS 0.6.1-beta1** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64**.
 
 **CottenDNS** نیز از [فورک سازگار WhiteDNS](https://github.com/WhiteDNS/CottenDns) و با حفظ نام و مجوز نویسندگان اصلی اضافه شده است.
 
@@ -22,10 +22,10 @@ installation commands below still install the published upstream release.
 با SSH وارد سرور شوید و اجرا کنید:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/WhiteDNS/Soar-Server/main/panel-setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/rjalilocsdg/Soar-Server/main/panel-setup.sh)
 ```
 
-نصب‌کننده نسخهٔ پایدار مشخص‌شده و checksum آن را از Releases دریافت و بررسی می‌کند؛ سپس هفت مرحلهٔ نصب را با توضیح هر مرحله پیش می‌برد. دسترسی root یا sudo و systemd لازم است؛ Go، Docker، Node یا پایگاه دادهٔ جدا روی سرور لازم نیست. متن ترمینال **انگلیسی و ASCII** است تا در SSH درست نمایش داده شود.
+نصب‌کننده نسخهٔ پیش‌نمایش مشخص‌شده و checksum آن را از Releases دریافت و بررسی می‌کند؛ سپس هفت مرحلهٔ نصب را با توضیح هر مرحله پیش می‌برد. دسترسی root یا sudo و systemd لازم است؛ Go، Docker، Node یا پایگاه دادهٔ جدا روی سرور لازم نیست. متن ترمینال **انگلیسی و ASCII** است تا در SSH درست نمایش داده شود.
 
 در ۰.۳.۱، رکوردهای A/NS پیش از تغییر سرویس بررسی می‌شوند؛ SOA و اتصال واقعی HTTPS از داخل تونل پس از شروع سرویس آزموده می‌شوند. خطای DNS جزئیات و امکان تلاش دوباره دارد. حساب آزمایش موقت و محدود است و در پایان حذف می‌شود. اگر آزمون اتصال نگذرد، می‌توانید مشکل را رفع و دوباره تست کنید، به وضعیت قبلی برگردید یا صریحاً نصب «تأییدنشده» را نگه دارید؛ در حالت آخر دستور با وضعیت غیرصفر پایان می‌یابد.
 
@@ -66,7 +66,7 @@ sudo apt-get install -y curl
 - پشتیبان، بازیابی و به‌روزرسانی از خود پنل با تأیید رمز مدیر و بازگشت در صورت شکست فعال‌سازی.
 - دامنه، HTTPS با تمدید خودکار گواهی و مسیر ورود تصادفی؛ تنظیم از پنل یا ترمینال.
 
-نسخهٔ پایدار فقط به‌روزرسانی‌های پایدار را پیشنهاد می‌دهد. کاربران beta8 و جدیدتر می‌توانند از خود پنل به 0.6.0 ارتقا دهند؛ نسخه‌های قدیمی‌تر باید یک‌بار نصب‌کنندهٔ بالا را اجرا کنند تا سرویس نگهداری نصب شود. حساب‌ها، کلیدها، مصرف، تنظیمات ذخیره‌شده و مسیر ورود موجود حفظ می‌شوند. پیش از ارتقا پشتیبان بگیرید.
+نسخهٔ پایدار فقط به‌روزرسانی‌های پایدار را پیشنهاد می‌دهد. کاربران beta8 و جدیدتر می‌توانند از خود پنل به 0.6.1-beta1 ارتقا دهند؛ نسخه‌های قدیمی‌تر باید یک‌بار نصب‌کنندهٔ بالا را اجرا کنند تا سرویس نگهداری نصب شود. حساب‌ها، کلیدها، مصرف، تنظیمات ذخیره‌شده و مسیر ورود موجود حفظ می‌شوند. پیش از ارتقا پشتیبان بگیرید.
 
 ## محدوده و بررسی
 
@@ -74,7 +74,7 @@ sudo apt-get install -y curl
 
 آزمون‌های Go، race، نصب‌کننده، بازیابی/ارتقا و رابط مرورگر در [GitHub Actions](https://github.com/WhiteDNS/Soar-Server/actions/workflows/panel.yml) اجرا می‌شوند. آزمون گوشی فیزیکی، شبکه‌های ایران و بار تولیدی گسترده هنوز کامل نیست. [گزارش اختلال مرورگر](docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md) نتایج و توقف مقطعی مشاهده‌شده را ثبت کرده است؛ پاسخ بررسی ربات آمازون معادل بازشدن کامل فروشگاه نیست.
 
-[دانلود نسخهٔ پایدار](https://github.com/WhiteDNS/Soar-Server/releases/tag/panel-v0.6.0) · [معماری](docs/PANEL-DESIGN.md) · [راهنمای کامل](docs/PANEL.fa.md)
+[دانلود نسخهٔ پیش‌نمایش](https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.6.1-beta1) · [معماری](docs/PANEL-DESIGN.md) · [راهنمای کامل](docs/PANEL.fa.md)
 
 ## پروژهٔ اصلی و مجوزها
 
@@ -108,7 +108,7 @@ PANEL_COTTEN_CLIENT="$PWD/.engine-source/cotten-client" go test ./... -count=1 -
 go test -race ./internal/panel ./internal/panelops -count=1 -timeout 300s
 go vet ./...
 python3 scripts/build_panel_bundle.py
-bash dist/soar-panel-0.6.0-linux-amd64/panel-install.sh --check-bundle
+bash dist/soar-panel-0.6.1-beta1-linux-amd64/panel-install.sh --check-bundle
 ```
 
 نسخهٔ پایه، پچ و هش تمام فایل‌های موتور Cotten در `patches/cotten-engine.json`

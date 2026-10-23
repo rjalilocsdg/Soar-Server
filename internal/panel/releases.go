@@ -13,7 +13,10 @@ import (
 	"time"
 )
 
-var Version = "0.6.0"
+var Version = "0.6.1-beta1"
+
+const ReleaseRepository = "rjalilocsdg/Soar-Server"
+
 var panelVersionPattern = regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)(?:-beta(\d+))?$`)
 
 func ValidVersion(v string) bool { return panelVersionPattern.MatchString(v) && len(v) < 48 }
@@ -75,7 +78,7 @@ func ReleaseClient() *http.Client {
 	}}
 }
 func getReleaseJSON(ctx context.Context, path string, out any) error {
-	req, e := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/repos/WhiteDNS/Soar-Server/"+path, nil)
+	req, e := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/repos/"+ReleaseRepository+"/"+path, nil)
 	if e != nil {
 		return e
 	}
@@ -103,13 +106,13 @@ func ReleaseForVersion(ctx context.Context, version string) (PanelRelease, error
 	return r, e
 }
 func validatePanelRelease(r PanelRelease, v string) error {
-	if r.Draft || r.Tag != "panel-v"+v || r.URL != "https://github.com/WhiteDNS/Soar-Server/releases/tag/"+r.Tag {
+	if r.Draft || r.Tag != "panel-v"+v || r.URL != "https://github.com/"+ReleaseRepository+"/releases/tag/"+r.Tag {
 		return errors.New("invalid official panel release")
 	}
 	found := 0
 	for _, a := range r.Assets {
 		for _, name := range []string{"soar-panel-" + v + "-linux-amd64.tar.gz", "soar-panel-" + v + "-linux-amd64.tar.gz.sha256"} {
-			if a.Name == name && a.URL == "https://github.com/WhiteDNS/Soar-Server/releases/download/"+r.Tag+"/"+name && a.Size > 0 && a.Size <= 96<<20 {
+			if a.Name == name && a.URL == "https://github.com/"+ReleaseRepository+"/releases/download/"+r.Tag+"/"+name && a.Size > 0 && a.Size <= 96<<20 {
 				found++
 			}
 		}

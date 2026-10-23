@@ -86,7 +86,8 @@ jobs:
             ${{ runner.temp }}/panel-screenshots/*.png
           if-no-files-found: error
   release:
-    if: startsWith(github.ref, 'refs/tags/panel-v')
+    # Fork previews are published manually after artifact verification.
+    if: startsWith(github.ref, 'refs/tags/panel-v') && github.repository == 'WhiteDNS/Soar-Server'
     needs: verify
     runs-on: ubuntu-24.04
     permissions:
