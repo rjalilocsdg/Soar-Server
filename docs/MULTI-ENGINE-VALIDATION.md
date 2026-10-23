@@ -47,3 +47,25 @@ No production VPS was provided, so systemd activation, public DNS
 delegation, physical Android connectivity, and performance under lossy
 Iranian networks have not been tested in this session. The generated
 Linux bundle is a custom build, not an upstream GitHub release.
+
+## 0.6.1-beta2: short account domains
+
+- 96 concurrent account creations produce unique three-character labels while
+  retaining 32-hex-character internal IDs and 32-byte encryption seeds.
+- Deterministic collision tests cover retry, bounded failure, random-source
+  errors and alias truncation at 20 label characters.
+- Changing label length preserves existing domains, keys, usage and subscription
+  URLs. Explicit key rotation applies the selected length to that account.
+- Settings API rejects invalid lengths and preserves the saved length when
+  older callers omit the field.
+- The ordinary Go suite passes with the same two macOS UDP tests excluded:
+  panel 87.531 seconds; panelops 6.099 seconds. Native engine clients use the
+  short account domains successfully.
+- New label-allocation/settings tests pass under the race detector in 27.862
+  seconds. Vet and module verification pass.
+- Full browser checks pass, including 3/6-character creation, settings persistence,
+  explicit rotation, preservation of other accounts, Persian/English, reduced
+  motion, 375 px portrait and 812 px landscape layouts.
+- The prior beta1 Linux CI run completed successfully, including its full native
+  client and race suites: https://github.com/rjalilocsdg/Soar-Server/actions/runs/39936646599.
+  Beta2 Linux CI is separate from these local results.

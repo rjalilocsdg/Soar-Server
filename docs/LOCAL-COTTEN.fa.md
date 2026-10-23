@@ -1,14 +1,14 @@
 # نصب Soar و Cotten از فایل بسته
 
-روش معمول نصب در [راهنمای قدم‌به‌قدم](PANEL.fa.md) آمده است. اگر فایل نصب را جداگانه می‌فرستید، آرشیو `soar-panel-0.6.1-beta1-linux-amd64.tar.gz` و checksum آن را از [انتشار 0.6.1-beta1](https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.6.1-beta1) دریافت کنید و مراحل زیر را انجام دهید.
+روش معمول نصب در [راهنمای قدم‌به‌قدم](PANEL.fa.md) آمده است. اگر فایل نصب را جداگانه می‌فرستید، آرشیو `soar-panel-0.6.1-beta2-linux-amd64.tar.gz` و checksum آن را از [انتشار 0.6.1-beta2](https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.6.1-beta2) دریافت کنید و مراحل زیر را انجام دهید.
 
 ۱. فایل را بدون بازکردن روی ویندوز، در پوشهٔ `/root` سرور Ubuntu یا Debian کپی کنید؛ همان روشی که برای فرستادن فایل به سرور استفاده می‌کنید کافی است.
 
 ۲. با SSH و کاربر root وارد سرور شوید و این سه دستور را به‌ترتیب اجرا کنید:
 
 ```bash
-tar -xzf /root/soar-panel-0.6.1-beta1-linux-amd64.tar.gz -C /root
-cd /root/soar-panel-0.6.1-beta1-linux-amd64
+tar -xzf /root/soar-panel-0.6.1-beta2-linux-amd64.tar.gz -C /root
+cd /root/soar-panel-0.6.1-beta2-linux-amd64
 bash panel-install.sh
 ```
 

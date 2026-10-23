@@ -47,14 +47,31 @@ NS tunnel queries beneath the StormDNS route are dispatched to the engine.
 Authoritative NS/SOA answers are retained at delegation, account and engine
 apexes for QNAME minimisation. TXT/CNAME/SRV packet routing is also preserved.
 
+## Short account domains
+
+In **Server settings → Account domains → Account domain label length**, choose
+3–26 characters. The default is 3, including on upgraded databases that have
+not set a preference. The existing maximum account-zone length still applies
+when using long base domains.
+
+New accounts use the selected length. Labels are allocated with duplicate
+checking inside the account write transaction, including alternate-domain
+truncation. Internal account IDs remain 128-bit and encryption seeds remain
+256-bit. Existing domains, keys, usage and subscriptions are preserved when
+changing this setting or upgrading.
+
+To shorten an existing account deliberately, use its **Rotate link and key**
+action after choosing the length. This revokes its old key and domain; refresh
+the subscription on its clients. This is never done automatically.
+
 ## Source and build
 
 To install the custom Linux amd64 bundle on a supported server, upload the
 archive and run these commands in an interactive SSH terminal:
 
 ```sh
-tar -xzf soar-panel-0.6.1-beta1-linux-amd64.tar.gz
-cd soar-panel-0.6.1-beta1-linux-amd64
+tar -xzf soar-panel-0.6.1-beta2-linux-amd64.tar.gz
+cd soar-panel-0.6.1-beta2-linux-amd64
 sudo bash panel-install.sh
 ```
 

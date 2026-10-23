@@ -389,11 +389,19 @@ func (h *HTTP) settings(w http.ResponseWriter, r *http.Request) {
 	}
 	var in struct {
 		Settings
-		ServerStreamLimit *int `json:"server_stream_limit"`
+		ServerStreamLimit  *int `json:"server_stream_limit"`
+		AccountLabelLength *int `json:"account_label_length"`
 	}
 	if e := decodeJSON(w, r, &in); e != nil {
 		errorReply(w, 400, e)
 		return
+	}
+	if in.AccountLabelLength != nil {
+		if *in.AccountLabelLength < 3 || *in.AccountLabelLength > 26 {
+			errorReply(w, 400, errors.New("account_label_length must be between 3 and 26"))
+			return
+		}
+		in.Settings.AccountLabelLength = *in.AccountLabelLength
 	}
 	if e := h.store.saveSettings(in.Settings, in.ServerStreamLimit); e != nil {
 		errorReply(w, 400, e)

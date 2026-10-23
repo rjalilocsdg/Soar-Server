@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-var Version = "0.6.1-beta1"
+var Version = "0.6.1-beta2"
 
 const ReleaseRepository = "rjalilocsdg/Soar-Server"
 

@@ -3,7 +3,7 @@ const path=require('node:path');
 module.exports=async function testSettings({page,url,out,assert}){
  const settings=page.locator('#settings-form');
  await page.waitForFunction(()=>document.getElementById('soar-maxQName').value==='253');
- assert.equal(await settings.locator('.setting-field').count(),21);
+ assert.equal(await settings.locator('.setting-field').count(),22);
  assert.equal(await settings.locator('.help-trigger').count(),21);
  for(const input of await settings.locator('.setting-field input,.setting-field select,.setting-field textarea').all()){
   const id=await input.getAttribute('aria-describedby');
@@ -86,5 +86,5 @@ module.exports=async function testSettings({page,url,out,assert}){
   await touch.locator('#soar-transport-trigger').tap();await touch.locator('#panel-select-options [role=option]').filter({hasText:'فقط TCP'}).tap();assert.equal(await touch.locator('#soar-transport').inputValue(),'only');assert.equal(await touch.locator('#field-tooltip').isVisible(),false);
  }finally{await mobile.close();}
  await page.setViewportSize({width:1440,height:1100});await page.evaluate(()=>window.scrollTo(0,0));
- console.log('PASS: question-mark-only help for all 21 fields; themed settings dropdowns, touch, Escape, bounds, presets, save/reload and exported tuning.');
+ console.log('PASS: question-mark-only help for 21 fields plus the account-label control; themed settings dropdowns, touch, Escape, bounds, presets, save/reload and exported tuning.');
 };

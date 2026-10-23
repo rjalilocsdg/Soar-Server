@@ -31,26 +31,31 @@ const (
 	MaxCottenSessionLimit     = 65535
 	DefaultSoarSessionLimit   = MaxSoarSessionLimit
 	DefaultCottenSessionLimit = MaxCottenSessionLimit
+	DefaultAccountLabelLength = 3
 	// Zero disables aggregate admission limits; positive limits use a portable
 	// signed 32-bit range rather than the width of the host's int type.
 	MaxStreamLimit = 2147483647
 )
 
 type Settings struct {
-	TunnelNameservers map[string]string `json:"tunnel_nameservers,omitempty"`
-	PublicIP          string            `json:"public_ip,omitempty"`
-	NameserverHost    string            `json:"nameserver_host,omitempty"`
-	TunnelZones       []string          `json:"tunnel_zones,omitempty"`
-	PrimaryZone       string            `json:"primary_zone,omitempty"`
-	BaseZone          string            `json:"base_zone"`
-	Resolvers         []string          `json:"resolvers"`
-	Country           string            `json:"country"`
-	AllowPorts        []uint16          `json:"allow_ports"`
-	SoarSettings      *ProfileSettings  `json:"soarSettings,omitempty"`
-	ServerStreamLimit int               `json:"server_stream_limit"`
+	AccountLabelLength int               `json:"account_label_length"`
+	TunnelNameservers  map[string]string `json:"tunnel_nameservers,omitempty"`
+	PublicIP           string            `json:"public_ip,omitempty"`
+	NameserverHost     string            `json:"nameserver_host,omitempty"`
+	TunnelZones        []string          `json:"tunnel_zones,omitempty"`
+	PrimaryZone        string            `json:"primary_zone,omitempty"`
+	BaseZone           string            `json:"base_zone"`
+	Resolvers          []string          `json:"resolvers"`
+	Country            string            `json:"country"`
+	AllowPorts         []uint16          `json:"allow_ports"`
+	SoarSettings       *ProfileSettings  `json:"soarSettings,omitempty"`
+	ServerStreamLimit  int               `json:"server_stream_limit"`
 }
 
 func (s Settings) Validate() error {
+	if s.AccountLabelLength != 0 && (s.AccountLabelLength < 3 || s.AccountLabelLength > 26) {
+		return errors.New("account_label_length must be between 3 and 26")
+	}
 	if s.ServerStreamLimit < 0 || s.ServerStreamLimit > MaxStreamLimit {
 		return fmt.Errorf("server_stream_limit must be between 0 and %d", MaxStreamLimit)
 	}
@@ -292,6 +297,9 @@ func (s *Store) ResetAdmin(name, password string) error {
 }
 func (s *Store) Settings() (v Settings, e error) {
 	e = s.db.View(func(tx *bolt.Tx) error { return json.Unmarshal(tx.Bucket(meta).Get([]byte("settings")), &v) })
+	if e == nil && v.AccountLabelLength == 0 {
+		v.AccountLabelLength = DefaultAccountLabelLength
+	}
 	if e == nil && v.SoarSettings == nil {
 		p := DefaultProfileSettings()
 		v.SoarSettings = &p
@@ -321,6 +329,9 @@ func (s *Store) saveSettings(v Settings, streamLimit *int) error {
 		}
 		if streamLimit == nil {
 			v.ServerStreamLimit = old.ServerStreamLimit
+		}
+		if v.AccountLabelLength == 0 {
+			v.AccountLabelLength = old.accountLabelLength()
 		}
 		if old.BaseZone != v.BaseZone {
 			return errors.New("base zone is fixed; changing it invalidates existing profiles")
@@ -394,6 +405,17 @@ func (s *Store) create(in ClientInput, installerProbe bool) (c Client, e error) 
 		b := tx.Bucket(clients)
 		if b.Stats().KeyN >= capacity {
 			return errors.New("account capacity reached")
+		}
+		if b.Get([]byte(id)) != nil {
+			return errors.New("account identity collision; retry creation")
+		}
+		var latest Settings
+		if err := json.Unmarshal(tx.Bucket(meta).Get([]byte("settings")), &latest); err != nil {
+			return err
+		}
+		c.Zone, e = allocateAccountZone(tx, latest, randomAccountLabel)
+		if e != nil {
+			return e
 		}
 		if e := putJSON(b, []byte(id), c); e != nil {
 			return e
@@ -511,7 +533,7 @@ func (s *Store) Rotate(id string) (c Client, e error) {
 	if e != nil {
 		return
 	}
-	_, zone, pub, seed, e := randomIdentity(cfg.BaseZone)
+	_, _, pub, seed, e := randomIdentity(cfg.BaseZone)
 	if e != nil {
 		return
 	}
@@ -520,7 +542,14 @@ func (s *Store) Rotate(id string) (c Client, e error) {
 		if e != nil {
 			return e
 		}
-		c.Zone = zone
+		var latest Settings
+		if e = json.Unmarshal(tx.Bucket(meta).Get([]byte("settings")), &latest); e != nil {
+			return e
+		}
+		c.Zone, e = allocateAccountZone(tx, latest, randomAccountLabel)
+		if e != nil {
+			return e
+		}
 		c.PublicKey = pub
 		c.Revision++
 		c.UpdatedAt = time.Now().UnixMilli()
