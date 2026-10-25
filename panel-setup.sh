@@ -4,7 +4,7 @@ set -Eeuo pipefail
 export LC_ALL=C
 umask 077
 # Advance only after the matching release archive and checksum are verified.
-PANEL_RELEASE=0.6.1-beta2
+PANEL_RELEASE=0.6.1-beta3
 PANEL_REPO=rjalilocsdg/Soar-Server
 PANEL_WORK=
 fail(){ printf '[ERROR] %s\n' "$*" >&2;exit 1; }

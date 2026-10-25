@@ -106,7 +106,7 @@ func inspectBackupTransaction(tx *bolt.Tx, summary *BackupSummary) error {
 		if e := json.Unmarshal(v, &c); e != nil {
 			return e
 		}
-		if e := c.normalizeSessionLimits(); e != nil {
+		if e := c.normalizeAccountOptions(); e != nil {
 			return e
 		}
 		if c.ID != string(k) || c.Revision == 0 || c.UsageEpoch == 0 || c.UploadBytes < 0 || c.DownloadBytes < 0 || c.UploadBytes > 1<<60 || c.DownloadBytes > 1<<60 {

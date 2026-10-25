@@ -1,7 +1,7 @@
 {
   "base_commit": "48b52018a0c261bccefaf20ad65f5f615ba823ea",
   "patch": "cotten-48b52018a0c2-reliability-tcp.patch",
-  "patch_sha256": "5e1146fbf73c8e7b3e0dbdef6d91843448d2497db09b44e24081b385ac56c362",
+  "patch_sha256": "17af7d6877db1c1a40b1c72044694583860f2f47dc1cf1abd4cdb347ba8e5477",
   "files_sha256": {
     ".dockerignore": "f45b0b9d1afead41408a050d1222002cdbd32596dd0fcadbf3618c05f3e6a1e2",
     ".github/workflows/build-go.yml": "92ac3ba426e2ca2b8794e164abfb19943c35ecc0ecf05e813db121f40f9d2e5d",
@@ -255,7 +255,7 @@
     "internal/udpserver/domain_rotation_test.go": "b04da1359630da69a58f829f8cc59042c0378a21b2a747ef417e0fddfc909f78",
     "internal/udpserver/downstream_security.go": "b45c1ff32e7341f3b454b86027a8b3c6389a1c1b541e21fee35eb3e4eae8cdfa",
     "internal/udpserver/downstream_security_test.go": "0e48dddb8703125a86302cf22715f2468185d48bec07f33657ed97c87842e368",
-    "internal/udpserver/embedded.go": "dd53d278bf72af73d128cecfd78ff0c71215a33fc4475ade57c372bd2e329652",
+    "internal/udpserver/embedded.go": "2696ab884f42cbbafa19191a9244b6a80dcfcad08fca62eb388e4b318149b017",
     "internal/udpserver/embedded_connect_test.go": "49a43308005e16666686be945aab07ddc366fbf6157a93db0d9d8a7d1ed6fe22",
     "internal/udpserver/embedded_dns.go": "afc17365c45034bc7d7adeb8021cd290c3ba2d96a5d9500d44c502ba4497206c",
     "internal/udpserver/embedded_dns_test.go": "0cd25596bf3ddb77963b5e9c483fe5d7a47f0fdfdb6e1603c117d990c8a9243c",

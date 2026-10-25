@@ -60,3 +60,10 @@ func enginePrefix(engine string) string {
 	}
 	return ""
 }
+
+func (c Client) encryptionMethod() int {
+	if c.EncryptionMethod == 0 {
+		return 5
+	}
+	return c.EncryptionMethod
+}

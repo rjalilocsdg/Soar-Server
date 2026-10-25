@@ -42,7 +42,7 @@ func (m *Manager) additionalFor(rt *accountRuntime, name string) (dnsEngine, err
 	}
 	allowed := func() bool {
 		c, err := m.store.Get(rt.client.ID)
-		return rt.ctx.Err() == nil && err == nil && c.Status(time.Now()) == "active" && c.hasEngine(name) && c.UsageEpoch == rt.client.UsageEpoch && c.PublicKey == rt.client.PublicKey
+		return rt.ctx.Err() == nil && err == nil && c.Status(time.Now()) == "active" && c.hasEngine(name) && c.UsageEpoch == rt.client.UsageEpoch && c.PublicKey == rt.client.PublicKey && c.encryptionMethod() == rt.client.encryptionMethod()
 	}
 	upstream := upstreamStorm
 	if name == "masterdns" {
@@ -57,9 +57,9 @@ func (m *Manager) additionalFor(rt *accountRuntime, name string) (dnsEngine, err
 	var engine dnsEngine
 	switch name {
 	case "stormdns":
-		engine, err = storm.New(rt.ctx, storm.Config{Domains: domains, Key: additionalKey(seed, name), StreamLimit: rt.client.StreamLimit, Allowed: allowed, DialContext: dial, ExchangeDNS: exchange})
+		engine, err = storm.New(rt.ctx, storm.Config{Domains: domains, EncryptionMethod: rt.client.encryptionMethod(), Key: additionalKey(seed, name), StreamLimit: rt.client.StreamLimit, Allowed: allowed, DialContext: dial, ExchangeDNS: exchange})
 	case "masterdns":
-		engine, err = master.New(rt.ctx, master.Config{Domains: domains, Key: additionalKey(seed, name), StreamLimit: rt.client.StreamLimit, Allowed: allowed, DialContext: dial, ExchangeDNS: exchange})
+		engine, err = master.New(rt.ctx, master.Config{Domains: domains, EncryptionMethod: rt.client.encryptionMethod(), Key: additionalKey(seed, name), StreamLimit: rt.client.StreamLimit, Allowed: allowed, DialContext: dial, ExchangeDNS: exchange})
 	default:
 		return nil, ErrDenied
 	}

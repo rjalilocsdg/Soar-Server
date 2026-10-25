@@ -164,18 +164,23 @@ func TestAdditionalRoutingNSAndDisabledEngine(t *testing.T) {
 
 // Real upstream clients test the wire protocol, not a substitute packet decoder.
 func TestAdditionalNativeClients(t *testing.T) {
-	for _, scenario := range []struct{ engine, client, query string }{
-		{"stormdns", "STORM", "TXT"}, {"stormdns", "STORM", "NS"},
-		{"stormdns", "STORM", "CNAME"}, {"stormdns", "STORM", "SRV"},
-		{"masterdns", "MASTER", "TXT"}, {"masterdns", "STORM", "TXT"},
+	for _, scenario := range []struct {
+		engine, client, query string
+		method                int
+	}{
+		{"stormdns", "STORM", "TXT", 5}, {"stormdns", "STORM", "NS", 5},
+		{"stormdns", "STORM", "CNAME", 5}, {"stormdns", "STORM", "SRV", 5},
+		{"masterdns", "MASTER", "TXT", 5}, {"masterdns", "STORM", "TXT", 5},
+		{"stormdns", "STORM", "TXT", 1}, {"masterdns", "MASTER", "TXT", 1},
+		{"cotten", "COTTEN", "TXT", 5}, {"cotten", "COTTEN", "TXT", 1},
 	} {
-		t.Run(scenario.engine+"-"+scenario.client+"-"+scenario.query, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s-%s-%s-method%d", scenario.engine, scenario.client, scenario.query, scenario.method), func(t *testing.T) {
 			binaryPath := os.Getenv("PANEL_" + scenario.client + "_CLIENT")
 			if binaryPath == "" {
 				t.Skip("CI supplies pinned upstream native clients")
 			}
 			s := testStore(t)
-			c, err := s.Create(ClientInput{Name: "native", Engines: "all", Enabled: true, StreamLimit: 2, QuotaBytes: 128 << 10})
+			c, err := s.Create(ClientInput{EncryptionMethod: &scenario.method, Name: "native", Engines: "all", Enabled: true, StreamLimit: 2, QuotaBytes: 128 << 10})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -204,6 +209,10 @@ func TestAdditionalNativeClients(t *testing.T) {
 			local.Close()
 			work := t.TempDir()
 			seed, _ := s.Seed(c.ID)
+			key := additionalKey(seed, scenario.engine)
+			if scenario.engine == "cotten" {
+				key = cottenKey(seed)
+			}
 			configText := fmt.Sprintf(`PROTOCOL_TYPE = "SOCKS5"
 LISTEN_IP = "127.0.0.1"
 LISTEN_PORT = %d
@@ -211,7 +220,7 @@ LOCAL_DNS_ENABLED = false
 SOCKS5_AUTH = false
 DOMAINS = [%q]
 ENCRYPTION_KEY = %q
-DATA_ENCRYPTION_METHOD = 5
+DATA_ENCRYPTION_METHOD = %d
 STARTUP_MODE = "resolvers"
 MIN_UPLOAD_MTU = 80
 MAX_UPLOAD_MTU = 100
@@ -223,7 +232,7 @@ MTU_TEST_PARALLELISM_RESOLVERS = 1
 AUTO_DISABLE_TIMEOUT_SERVERS = false
 LOG_LEVEL = "INFO"
 DNS_QUERY_TYPE = %q
-`, port, enginePrefix(scenario.engine)+c.Zone, additionalKey(seed, scenario.engine), scenario.query)
+`, port, enginePrefix(scenario.engine)+c.Zone, key, scenario.method, scenario.query)
 			cfg := filepath.Join(work, "client.toml")
 			resolvers := filepath.Join(work, "resolvers.txt")
 			if err := os.WriteFile(cfg, []byte(configText), 0600); err != nil {
@@ -290,7 +299,12 @@ DNS_QUERY_TYPE = %q
 			if _, err := m.dialForEngine(rt, context.Background(), "tcp", "8.8.8.8:443", upstreamMaster); err != errAccountStreamLimit {
 				t.Fatalf("shared stream cap: %v", err)
 			}
-			engine, err := m.additionalFor(rt, scenario.engine)
+			var engine dnsEngine
+			if scenario.engine == "cotten" {
+				engine, err = m.cottenFor(rt)
+			} else {
+				engine, err = m.additionalFor(rt, scenario.engine)
+			}
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -4,3 +4,5 @@
 *.yml text eol=lf
 *.ttf binary
 *.woff2 binary
+# Unified patch context contains intentional leading spaces before source tabs.
+*.patch -whitespace

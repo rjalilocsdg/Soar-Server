@@ -675,13 +675,27 @@ index 1060976..464e6d5 100644
  		s.log.Debugf(
  			"🌍 <green>Tunnel DNS Resolved Upstream</green> <magenta>|</magenta> <blue>Domain</blue>: <cyan>%s</cyan> <magenta>|</magenta> <blue>Type</blue>: <yellow>%s</yellow> <magenta>|</magenta> <blue>Session</blue>: <cyan>%d</cyan> <magenta>|</magenta> <blue>Seq</blue>: <cyan>%d</cyan> <magenta>|</magenta> <blue>Bytes</blue>: <cyan>%d</cyan>",
 diff --git a/internal/udpserver/embedded.go b/internal/udpserver/embedded.go
-index 270dfae..9f3c0d3 100644
+index 270dfae..c1ba6e5 100644
 --- a/internal/udpserver/embedded.go
 +++ b/internal/udpserver/embedded.go
-@@ -22,6 +22,13 @@ type EmbeddedConfig struct {
- 	DialContext func(context.Context, string, string) (net.Conn, error)
- 	ExchangeDNS func(context.Context, []byte) ([]byte, error)
- 	Allowed     func() bool
+@@ -16,12 +16,21 @@ import (
+ // EmbeddedConfig describes one isolated account. All egress belongs to the
+ // caller: there is no fallback to an unmetered socket when a hook rejects it.
+ type EmbeddedConfig struct {
+-	Domains     []string
+-	Domain      string
+-	Key         string
+-	DialContext func(context.Context, string, string) (net.Conn, error)
+-	ExchangeDNS func(context.Context, []byte) ([]byte, error)
+-	Allowed     func() bool
++	// EncryptionMethod accepts 1 (XOR) or 5 (AES-256-GCM); zero keeps AES.
++	EncryptionMethod int
++	Domains          []string
++	Domain           string
++	Key              string
++	DialContext      func(context.Context, string, string) (net.Conn, error)
++	ExchangeDNS      func(context.Context, []byte) ([]byte, error)
++	Allowed          func() bool
 +
 +	// MaxActiveSessions bounds live sessions across native and legacy clients.
 +	// Zero preserves the embedded default of eight; valid explicit values are 1–65535.
@@ -692,20 +706,36 @@ index 270dfae..9f3c0d3 100644
  }
  
  type Embedded struct {
-@@ -38,6 +45,12 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
+@@ -35,10 +44,22 @@ type Embedded struct {
+ }
+ 
+ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
++	if in.EncryptionMethod == 0 {
++		in.EncryptionMethod = 5
++	}
++	if in.EncryptionMethod != 1 && in.EncryptionMethod != 5 {
++		return nil, errors.New("embedded encryption method must be 1 (XOR) or 5 (AES-256-GCM)")
++	}
  	if parent == nil || in.Domain == "" || len(in.Domain) > 128 || strings.ContainsAny(in.Domain, " /\\\t\n") || len(in.Key) < 32 || in.DialContext == nil || in.ExchangeDNS == nil || in.Allowed == nil {
  		return nil, errors.New("embedded server requires a domain, key and all account-policy hooks")
  	}
+-	codec, err := security.NewCodec(5, in.Key)
 +	if in.MaxActiveSessions < 0 || in.MaxActiveSessions > maxServerSessionSlots {
 +		return nil, errors.New("embedded session limit must be between 1 and 65535, or zero for the default")
 +	}
 +	if in.MaxStreamsPerSession < 0 || in.MaxStreamsPerSession > 65535 {
 +		return nil, errors.New("embedded stream limit must be between 1 and 65535, or zero for the default")
 +	}
- 	codec, err := security.NewCodec(5, in.Key)
++	codec, err := security.NewCodec(in.EncryptionMethod, in.Key)
  	if err != nil {
  		return nil, err
-@@ -60,6 +73,12 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
+ 	}
+@@ -56,10 +77,16 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
+ 		cfg.Domain = append([]string(nil), in.Domains...)
+ 	}
+ 	cfg.AdvertiseDomains = append([]string(nil), cfg.Domain...)
+-	cfg.DataEncryptionMethod, cfg.EncryptionAutoDetect = 5, false
++	cfg.DataEncryptionMethod, cfg.EncryptionAutoDetect = in.EncryptionMethod, false
  	cfg.TCPListenerEnabled, cfg.UDPIPv6Enabled, cfg.TCPIPv6Enabled = false, false, false
  	cfg.MinVPNLabelLength = 1
  	cfg.MaxActiveSessions, cfg.MaxStreamsPerSession = 8, 128
@@ -718,7 +748,7 @@ index 270dfae..9f3c0d3 100644
  	cfg.DeferredSessionWorkers, cfg.DeferredSessionQueueLimit = 2, 64
  	cfg.SessionOrphanQueueInitialCap, cfg.StreamQueueInitialCapacity = 8, 16
  	cfg.DNSFragmentStoreCapacity, cfg.SOCKS5FragmentStoreCapacity = 32, 32
-@@ -71,22 +90,53 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
+@@ -71,22 +98,53 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
  	cfg.SessionCleanupIntervalSecs = 5
  	ctx, cancel := context.WithCancel(parent)
  	s := New(cfg, logger.New("Cotten account", "ERROR"), codec)
@@ -778,7 +808,7 @@ index 270dfae..9f3c0d3 100644
  	}
  	e := &Embedded{s: s, ctx: ctx, cancel: cancel, allowed: in.Allowed}
  	s.deferredDNSSession.Start(ctx)
-@@ -96,17 +146,36 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
+@@ -96,17 +154,36 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*Embedded, error) {
  	return e, nil
  }
  

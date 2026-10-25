@@ -48,7 +48,7 @@ func (s *Store) profilesAt(c Client, cfg Settings, base string) (map[string]stri
 		}
 		body := map[string]any{"schema": "whitedns.profile", "version": 1, "profile": map[string]any{
 			"id": c.ID + ":cotten", "name": c.Name + " · Cotten", "engine": "cottendns",
-			"server":    map[string]any{"domain": c.cottenZone(), "encryption_key": cottenKey(seed), "encryption_method": 5},
+			"server":    map[string]any{"domain": c.cottenZone(), "encryption_key": cottenKey(seed), "encryption_method": c.encryptionMethod()},
 			"resolvers": cfg.Resolvers,
 		}}
 		raw, err := json.Marshal(body)
@@ -72,7 +72,7 @@ func (s *Store) profilesAt(c Client, cfg Settings, base string) (map[string]stri
 		}
 		body := map[string]any{"schema": "whitedns.profile", "version": 1, "profile": map[string]any{
 			"id": c.ID + ":" + engine, "name": c.Name + " · " + label, "engine": engine,
-			"server":    map[string]any{"domain": enginePrefix(engine) + c.Zone, "encryption_key": additionalKey(seed, engine), "encryption_method": 5},
+			"server":    map[string]any{"domain": enginePrefix(engine) + c.Zone, "encryption_key": additionalKey(seed, engine), "encryption_method": c.encryptionMethod()},
 			"resolvers": cfg.Resolvers,
 		}}
 		raw, err := json.Marshal(body)

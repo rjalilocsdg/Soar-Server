@@ -170,7 +170,7 @@ func (m *Manager) Reconcile() error {
 	for id, r := range m.accounts {
 		c, ok := desired[id]
 		if !ok || r.ctx.Err() != nil || c.Zone != r.client.Zone || c.PublicKey != r.client.PublicKey || c.Engines != r.client.Engines ||
-			c.StreamLimit != r.client.StreamLimit || c.UsageEpoch != r.client.UsageEpoch ||
+			c.encryptionMethod() != r.client.encryptionMethod() || c.StreamLimit != r.client.StreamLimit || c.UsageEpoch != r.client.UsageEpoch ||
 			c.SoarSessionLimit != r.client.SoarSessionLimit || c.CottenSessionLimit != r.client.CottenSessionLimit ||
 			strings.Join(r.zones, ",") != strings.Join(cfg.accountZones(c), ",") {
 			delete(m.accounts, id)

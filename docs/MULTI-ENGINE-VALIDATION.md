@@ -69,3 +69,26 @@ Linux bundle is a custom build, not an upstream GitHub release.
 - The prior beta1 Linux CI run completed successfully, including its full native
   client and race suites: https://github.com/rjalilocsdg/Soar-Server/actions/runs/39936646599.
   Beta2 Linux CI is separate from these local results.
+
+## 0.6.1-beta3: optional XOR — 2026-10-25
+
+- New and legacy accounts default to AES-256-GCM. Explicit XOR (1) and AES (5)
+  selections persist; omitted API fields preserve the chosen method.
+- Profile exports agree with each account's method for Cotten, StormDNS and
+  MasterDNS. Soar profiles and account keys remain unchanged.
+- Backup inspection accepts both supported methods. Invalid API values fail.
+- Changing the method retires only the affected account runtime; old embedded
+  policy hooks reject it as soon as its saved method changes.
+- Real native Cotten, StormDNS and MasterDnsVPN TCP echo transfers pass with
+  both methods, including metering and shared stream limits. The short native
+  Cotten check avoids the oversized datagrams in the host-limited old test.
+- Ordinary Go regression suite passes (panel 94.637 s, panelops 6.436 s), with
+  the same two documented macOS-incompatible tests excluded.
+- Encryption and native-client tests pass with the race detector (67.227 s).
+- The updated Cotten patch applies to a clean checkout of its pinned base and
+  matches every release-manifest checksum.
+- Vet, module verification, release-version tests and bootstrap tests pass.
+- Full browser suite passes, including mouse interaction inside modal dialogs,
+  XOR creation, profile export, reload persistence and switching back to AES.
+  Existing admin, subscription, backup, settings and bilingual responsive flows
+  pass, with the new account form checked down to 320 px width.

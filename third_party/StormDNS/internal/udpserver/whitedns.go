@@ -14,12 +14,14 @@ import (
 )
 
 type EmbeddedConfig struct {
-	Domains     []string
-	Key         string
-	StreamLimit int
-	Allowed     func() bool
-	DialContext func(context.Context, string, string) (net.Conn, error)
-	ExchangeDNS func(context.Context, []byte) ([]byte, error)
+	// EncryptionMethod accepts 1 (XOR) or 5 (AES-256-GCM); zero keeps AES.
+	EncryptionMethod int
+	Domains          []string
+	Key              string
+	StreamLimit      int
+	Allowed          func() bool
+	DialContext      func(context.Context, string, string) (net.Conn, error)
+	ExchangeDNS      func(context.Context, []byte) ([]byte, error)
 }
 
 type EmbeddedServer struct {
@@ -33,12 +35,18 @@ type EmbeddedServer struct {
 }
 
 func NewEmbedded(parent context.Context, in EmbeddedConfig) (*EmbeddedServer, error) {
+	if in.EncryptionMethod == 0 {
+		in.EncryptionMethod = 5
+	}
+	if in.EncryptionMethod != 1 && in.EncryptionMethod != 5 {
+		return nil, errors.New("embedded encryption method must be 1 (XOR) or 5 (AES-256-GCM)")
+	}
 	if len(in.Domains) == 0 || in.Key == "" || in.Allowed == nil || in.DialContext == nil || in.ExchangeDNS == nil {
 		return nil, errors.New("embedded engine requires domains, key and all policy hooks")
 	}
 	cfg := config.EmbeddedDefaults()
 	cfg.Domain = append([]string(nil), in.Domains...)
-	cfg.DataEncryptionMethod = 5
+	cfg.DataEncryptionMethod = in.EncryptionMethod
 	// Per-account engines are lazy; bound queues and workers independently of CPU count.
 	cfg.DeferredSessionWorkers = 1
 	cfg.DeferredSessionQueueLimit = 128
@@ -46,7 +54,7 @@ func NewEmbedded(parent context.Context, in EmbeddedConfig) (*EmbeddedServer, er
 	if in.StreamLimit > 0 {
 		cfg.MaxStreamsPerSession = min(in.StreamLimit, 65535)
 	}
-	codec, err := security.NewCodec(5, in.Key)
+	codec, err := security.NewCodec(in.EncryptionMethod, in.Key)
 	if err != nil {
 		return nil, err
 	}

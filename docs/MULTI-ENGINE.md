@@ -29,7 +29,13 @@ produce corresponding profiles for each enabled engine.
 
 The existing `whitedns.profile` version 1 envelope is used for new links,
 with `server.domain`, `server.encryption_key` and `server.encryption_method`.
-The latter is 5 (AES-256-GCM). Engine keys use separate HMAC derivation
+The account create/edit form offers 5 (AES-256-GCM, default) or 1 (XOR, weak)
+for Cotten, StormDNS and MasterDNS. Soar keeps its existing encryption.
+XOR does not provide AES-GCM confidentiality or authentication; it is optional
+and is not a guarantee of higher speed or DPI resistance. Changing the method
+closes that account’s sessions; refresh its clients’ subscriptions before reconnecting.
+Older accounts keep AES and API updates that omit the setting preserve it.
+Engine keys use separate HMAC derivation
 contexts from the account seed. Rotating the account key revokes all four;
 rotating the subscription URL alone does not change tunnel keys.
 
@@ -70,8 +76,8 @@ To install the custom Linux amd64 bundle on a supported server, upload the
 archive and run these commands in an interactive SSH terminal:
 
 ```sh
-tar -xzf soar-panel-0.6.1-beta2-linux-amd64.tar.gz
-cd soar-panel-0.6.1-beta2-linux-amd64
+tar -xzf soar-panel-0.6.1-beta3-linux-amd64.tar.gz
+cd soar-panel-0.6.1-beta3-linux-amd64
 sudo bash panel-install.sh
 ```
 

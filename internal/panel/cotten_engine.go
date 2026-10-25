@@ -92,10 +92,10 @@ func (m *Manager) cottenFor(rt *accountRuntime) (*cotten.Server, error) {
 	for i, zone := range rt.zones {
 		domains[i] = "cot." + zone
 	}
-	engine, err := cotten.New(rt.ctx, cotten.Config{Domain: domains[0], Domains: domains, Key: cottenKey(seed), MaxActiveSessions: rt.client.CottenSessionLimit, MaxStreamsPerSession: cottenStreamLimit(rt.client.StreamLimit),
+	engine, err := cotten.New(rt.ctx, cotten.Config{Domain: domains[0], Domains: domains, EncryptionMethod: rt.client.encryptionMethod(), Key: cottenKey(seed), MaxActiveSessions: rt.client.CottenSessionLimit, MaxStreamsPerSession: cottenStreamLimit(rt.client.StreamLimit),
 		Allowed: func() bool {
 			c, err := m.store.Get(rt.client.ID)
-			return err == nil && c.Status(time.Now()) == "active" && c.hasEngine("cotten") && c.UsageEpoch == rt.client.UsageEpoch && c.PublicKey == rt.client.PublicKey
+			return err == nil && c.Status(time.Now()) == "active" && c.hasEngine("cotten") && c.UsageEpoch == rt.client.UsageEpoch && c.PublicKey == rt.client.PublicKey && c.encryptionMethod() == rt.client.encryptionMethod()
 		},
 		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
 			return m.dialForEngine(rt, ctx, network, address, upstreamCotten)

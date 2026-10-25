@@ -2,6 +2,9 @@
 // Translation is applied to authored UI only. Account names, notes, URLs and input values are never translated.
 const panelI18n = (() => {
  const catalog = {
+ "روش رمزنگاری Cotten، StormDNS و MasterDNS": "Cotten, StormDNS and MasterDNS encryption",
+ "AES-256-GCM پیشنهاد می‌شود. XOR رمزنگاری ضعیف است. پس از تغییر، اتصال‌های حساب بسته می‌شوند و باید ساب کلاینت را تازه کنید. این گزینه روی Soar اثری ندارد.": "AES-256-GCM is recommended. XOR is weak encryption. Changing this closes account sessions; refresh the client subscription afterward. This setting does not affect Soar.",
+ "XOR — ضعیف": "XOR — weak",
  "نام‌سرور فعلی در سرویس DNS": "Current nameserver at your DNS provider",
  "رکوردهای زیر را در سرویس DNS بسازید؛ Proxy خاموش باشد. نام‌سرور دامنهٔ جایگزین را روی همان دامنهٔ جایگزین نگه دارید تا به دامنهٔ مسدودشده وابسته نشود. اگر نام‌سرور فعلی متفاوت است، مقدار پیشنهادی را اصلاح و دوباره ذخیره کنید.": "Create the following records at your DNS provider with proxy disabled. Keep each backup domain's nameserver on that backup domain so it does not depend on a blocked domain. If your existing nameserver differs, correct the suggested value and save again.",
  "نام‌سرور این دامنه": "Nameserver for this domain",
