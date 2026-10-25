@@ -4,7 +4,7 @@ window.panelAntiFlood=(()=>{
  const reasons={account_rate:tr('نرخ اتصال حساب'),server_rate:tr('نرخ اتصال سرور'),target_rate:tr('نرخ اتصال به یک IP'),network_rate:tr('نرخ اتصال به یک شبکه'),account_streams:tr('جریان‌های هم‌زمان حساب'),server_streams:tr('جریان‌های هم‌زمان سرور'),target_streams:tr('جریان‌های هم‌زمان مقصد'),target_scan:tr('تعداد مقصدهای تازه'),dial_failures:tr('شکست‌های مکرر اتصال'),account_upload:tr('آپلود حساب'),target_upload:tr('آپلود به یک IP'),server_upload:tr('آپلود کل سرور'),resolver_rate:tr('درخواست DNS حساب'),server_resolver_rate:tr('درخواست DNS سرور'),capacity:tr('ظرفیت محافظت'),quarantine:tr('قرنطینه'),manual_release:tr('آزادسازی دستی')};
  const actions={observed:tr('فقط مشاهده'),denied:tr('رد شد'),quarantined:tr('قرنطینه'),released:tr('آزاد شد')};
  const fields=[
-  ['account_rate','نرخ اتصال حساب',1,10000,'اتصال جدید در ثانیه؛ مجموع Soar، Cotten و MasterDNS'],
+  ['account_rate','نرخ اتصال حساب',1,10000,'اتصال جدید در ثانیه؛ مجموع Soar، Cotten، StormDNS و MasterDNS'],
   ['account_burst','جهش کوتاه حساب',1,20000,'تعداد اتصال جدید مجاز در یک جهش کوتاه'],
   ['server_rate','نرخ اتصال سرور',1,100000,'اتصال جدید در ثانیه؛ مجموع همهٔ حساب‌ها'],
   ['server_burst','جهش کوتاه سرور',1,200000,'تعداد اتصال جدید مجاز در یک جهش کوتاه'],
@@ -14,7 +14,7 @@ window.panelAntiFlood=(()=>{
   ['network_burst','جهش کوتاه شبکه',1,40000,'تعداد اتصال جدید مجاز در یک جهش کوتاه'],
   ['account_streams','جریان‌های هم‌زمان حساب',1,4096,'شامل اتصال‌های در حال برقراری؛ سقف حساب هم اعمال می‌شود'],
   ['server_streams','جریان‌های هم‌زمان سرور',1,32768,'شامل اتصال‌های در حال برقراری؛ سقف حساب هم اعمال می‌شود'],
-  ['target_streams','جریان‌های هم‌زمان مقصد',1,4096,'همهٔ حساب‌ها، پورت‌ها و هر سه موتور مشترک'],
+  ['target_streams','جریان‌های هم‌زمان مقصد',1,4096,'همهٔ حساب‌ها، پورت‌ها و هر چهار موتور مشترک'],
   ['targets_per_minute','مقصدهای متمایز در دقیقه',10,2000,'بر اساس IP واقعی اتصال، در پنجرهٔ متحرک یک دقیقه'],
   ['failure_threshold','حداقل شکست اتصال',10,10000,'شمار شکست‌ها در یک دقیقه؛ همراه با درصد شکست بررسی می‌شود'],
   ['failure_percent','درصد شکست اتصال',50,100,'درصد شکست لازم برای قرنطینه؛ خطای سیاست و لغو اتصال حساب نمی‌شوند'],
@@ -23,7 +23,7 @@ window.panelAntiFlood=(()=>{
   ['account_upload_kib','آپلود حساب',32,524288,'KiB/s؛ جهش دوثانیه‌ای مجاز است. دانلود حساب نمی‌شود'],
   ['target_upload_kib','آپلود به یک IP',32,524288,'KiB/s؛ جهش دوثانیه‌ای مجاز است. دانلود حساب نمی‌شود'],
   ['server_upload_kib','آپلود کل سرور',32,524288,'KiB/s؛ جهش دوثانیه‌ای مجاز است. دانلود حساب نمی‌شود'],
-  ['resolver_qps','درخواست DNS حساب',1,10000,'درخواست DNS خروجی Cotten و MasterDNS در ثانیه؛ سقف سرور چهار برابر است'],
+  ['resolver_qps','درخواست DNS حساب',1,10000,'درخواست DNS خروجی Cotten، StormDNS و MasterDNS در ثانیه؛ سقف سرور چهار برابر است'],
  ];
  const groups={account_rate:'نرخ و جهش اتصال',account_streams:'ظرفیت و مقصدها',failure_threshold:'تشخیص و قرنطینه',account_upload_kib:'آپلود و DNS'};
  let group;

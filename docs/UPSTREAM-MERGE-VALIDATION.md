@@ -28,3 +28,19 @@ runs because macOS rejects their oversized datagrams. They remain enabled in
 native Linux CI. The host's system Bash is 3.2; modern-Bash installer checks
 run in Linux CI. No production VPS or physical-device deployment is performed
 by this merge task.
+
+## Verification scope
+
+Local checks include beta3 fixture compatibility, native AES/XOR client traffic,
+short-label allocation, settings restarts and anti-flood behavior under Go's
+race detector. The embedded Cotten and MasterDNS session tests pass under the
+race detector. Both release patches also apply successfully to clean checkouts
+of their pinned source revisions and match their complete file manifests.
+Python release/bootstrap checks and Go vet pass. Browser checks cover English
+and Persian, account editing, encryption, labels, sharing, subscriptions and
+responsive layouts.
+
+The publication gate is the `Verify management panel` workflow on both native
+Linux architectures, including the full Go/race suite, engine suites, installer
+checks, offline bundle verification and both browser acceptance suites. Release
+assets are downloaded directly from that successful workflow run.
