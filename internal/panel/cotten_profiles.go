@@ -10,7 +10,9 @@ import (
 	"strings"
 )
 
-func (c Client) cottenZone() string { return "cot." + c.Zone }
+func (c Client) cottenZone() string    { return "cot." + c.Zone }
+func (c Client) masterDNSZone() string { return "master." + c.Zone }
+func masterDNSKey(seed []byte) string  { return additionalKey(seed, "masterdns") }
 
 // Derivation keeps keys distinct without a second secret table. Existing full
 // backups already contain the seed, and rotating it revokes both engine keys.

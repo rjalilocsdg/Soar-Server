@@ -1,18 +1,17 @@
-# WhiteDNS Soar Panel
+> Fork release **0.10.1** merges upstream through `b26b402` (Telegram, ARM64,
+> anti-flood protection, UI updates and CottenMax) while preserving StormDNS,
+> 3–26-character account labels and optional XOR. Existing beta3 account links,
+> keys and subscriptions remain valid. [Fork integration details](docs/MULTI-ENGINE.md).
 
-Multi-engine preview **0.6.1-beta3** (optional per-account XOR; AES-256-GCM remains the default): [four-engine integration](docs/MULTI-ENGINE.md) adds
-StormDNS and MasterDnsVPN alongside Soar and Cotten, with shared account
-limits and subscriptions. The one-command installer below installs this fork’s
-versioned preview release and verifies its checksums.
+![Soar Server and WhiteDNS management dashboard](docs/assets/soar-server-banner.png)
 
-New account domains now default to **3-character labels**. Change the length in
-**Server settings → Account domains**; existing account domains remain valid.
+# WhiteDNS Server Management
 
 [English installation guide](docs/PANEL.en.md) · [راهنمای فارسی](docs/PANEL.fa.md)
 
 [دامنه‌های جایگزین تونل و پنل](docs/DOMAINS.fa.md): حداکثر ۸ دامنه برای هر بخش، بدون ساخت دوبارهٔ حساب‌ها یا تغییر سهمیه. نصب اولیه همچنان فقط یک دامنه می‌خواهد.
 
-پنل مدیریت سرور **WhiteDNS 0.6.1-beta3** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64**.
+پنل مدیریت سرور **WhiteDNS 0.8.0** با موتورهای **Soar، Cotten و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
 
 **CottenDNS** نیز از [فورک سازگار WhiteDNS](https://github.com/WhiteDNS/CottenDns) و با حفظ نام و مجوز نویسندگان اصلی اضافه شده است.
 
@@ -28,7 +27,7 @@ New account domains now default to **3-character labels**. Change the length in
 bash <(curl -fsSL https://raw.githubusercontent.com/rjalilocsdg/Soar-Server/main/panel-setup.sh)
 ```
 
-نصب‌کننده نسخهٔ پیش‌نمایش مشخص‌شده و checksum آن را از Releases دریافت و بررسی می‌کند؛ سپس هفت مرحلهٔ نصب را با توضیح هر مرحله پیش می‌برد. دسترسی root یا sudo و systemd لازم است؛ Go، Docker، Node یا پایگاه دادهٔ جدا روی سرور لازم نیست. متن ترمینال **انگلیسی و ASCII** است تا در SSH درست نمایش داده شود.
+نصب‌کننده در هر اجرا آخرین نسخهٔ پایدار معرفی‌شده در Releases را پیدا می‌کند و بستهٔ سازگار با معماری سرور و checksum آن را دریافت و بررسی می‌کند؛ سپس هفت مرحلهٔ نصب را با توضیح هر مرحله پیش می‌برد. دسترسی root یا sudo و systemd لازم است؛ Go، Docker، Node یا پایگاه دادهٔ جدا روی سرور لازم نیست. متن ترمینال **انگلیسی و ASCII** است تا در SSH درست نمایش داده شود.
 
 در ۰.۳.۱، رکوردهای A/NS پیش از تغییر سرویس بررسی می‌شوند؛ SOA و اتصال واقعی HTTPS از داخل تونل پس از شروع سرویس آزموده می‌شوند. خطای DNS جزئیات و امکان تلاش دوباره دارد. حساب آزمایش موقت و محدود است و در پایان حذف می‌شود. اگر آزمون اتصال نگذرد، می‌توانید مشکل را رفع و دوباره تست کنید، به وضعیت قبلی برگردید یا صریحاً نصب «تأییدنشده» را نگه دارید؛ در حالت آخر دستور با وضعیت غیرصفر پایان می‌یابد.
 
@@ -55,7 +54,11 @@ sudo apt-get install -y curl
 
 برای ساب کامل از **[WhiteDNS 1.6.8 یا جدیدتر](https://github.com/WhiteDNS/WhiteDNS-Android/releases/latest)** استفاده کنید. پس از تغییر تنظیمات تونل، ساب را در اپ تازه‌سازی کنید؛ برای لینک مستقیم، پروفایل را دوباره Import کنید. [راهنمای ساب، حجم، انقضا و تعویض لینک](docs/SUBSCRIPTIONS.md) · [گزارش آزمون پنل و اپ](docs/SUBSCRIPTIONS-VERIFICATION-2026-10-18.md).
 
-در فرم حساب، «Soar و Cotten (پیشنهادی)» هر دو روش اتصال را در یک ساب می‌دهد. دامنه و کلید دیگری لازم نیست؛ حجم، انقضا و سرعت مشترک‌اند. حساب‌های قبلی و لینک Soar آن‌ها حفظ می‌شوند.
+در فرم حساب می‌توانید Soar، Cotten، MasterDNS یا هر ترکیب از آن‌ها را انتخاب کنید. «هر سه موتور» یک ساب با سه روش اتصال می‌دهد؛ حجم، انقضا و سرعت مشترک‌اند و رکورد DNS دیگری لازم نیست. حساب‌های موجود انتخاب قبلی خود را حفظ می‌کنند؛ برای افزودن MasterDNS، حساب را ویرایش و سپس ساب را تازه‌سازی کنید. [راهنمای MasterDNS](docs/MASTERDNS.md).
+
+لینک نصب ثابت است و با انتشار نسخهٔ پایدار جدید به تغییر دستور یا شمارهٔ نسخه نیاز ندارد. نسخه‌های آزمایشی نصب نمی‌شوند؛ اگر یافتن نسخه، دریافت بستهٔ معماری سرور یا بررسی checksum شکست بخورد، نصب پیش از تغییر سرویس متوقف می‌شود و نسخهٔ قدیمی جایگزین نمی‌شود.
+
+[مدیریت با تلگرام / Telegram management](docs/TELEGRAM.md): اتصال با توکن ربات و لینک یک‌بارمصرف، مدیریت حساب‌ها، راه‌اندازی مجدد و ارتقای پنل، هشدار و گزارش روزانه.
 
 ## امکانات و ارتقا
 
@@ -69,15 +72,19 @@ sudo apt-get install -y curl
 - پشتیبان، بازیابی و به‌روزرسانی از خود پنل با تأیید رمز مدیر و بازگشت در صورت شکست فعال‌سازی.
 - دامنه، HTTPS با تمدید خودکار گواهی و مسیر ورود تصادفی؛ تنظیم از پنل یا ترمینال.
 
-نسخهٔ پایدار فقط به‌روزرسانی‌های پایدار را پیشنهاد می‌دهد. کاربران beta8 و جدیدتر می‌توانند از خود پنل به 0.6.1-beta3 ارتقا دهند؛ نسخه‌های قدیمی‌تر باید یک‌بار نصب‌کنندهٔ بالا را اجرا کنند تا سرویس نگهداری نصب شود. حساب‌ها، کلیدها، مصرف، تنظیمات ذخیره‌شده و مسیر ورود موجود حفظ می‌شوند. پیش از ارتقا پشتیبان بگیرید.
+نسخهٔ پایدار فقط به‌روزرسانی‌های پایدار را پیشنهاد می‌دهد. کاربران beta8 و جدیدتر می‌توانند از خود پنل به آخرین نسخهٔ پایدار ارتقا دهند؛ نسخه‌های قدیمی‌تر باید یک‌بار نصب‌کنندهٔ بالا را اجرا کنند تا سرویس نگهداری نصب شود. حساب‌ها، کلیدها، مصرف، تنظیمات ذخیره‌شده و مسیر ورود موجود حفظ می‌شوند. پیش از ارتقا پشتیبان بگیرید.
+
+## ضدفلاد و کنترل سوءاستفاده
+
+کنترل نرخ شروع اتصال، IP و شبکهٔ مقصد، تشخیص اسکن، سقف آپلود خروجی و قرنطینهٔ موقت بین Soar، Cotten و MasterDNS مشترک است. تنظیمات و گزارش در صفحهٔ «ضدفلاد و کنترل سوءاستفاده» قرار دارند. پیش‌فرض فعال است؛ این سقف‌ها مستقل از سقف جریان حساب هستند. [راهنما، پیش‌فرض‌ها و محدودیت‌های حفاظت](docs/ANTIFLOOD.fa.md).
 
 ## محدوده و بررسی
 
 این انتشار پایدارِ **پنل مدیریت** است. پورت‌های مقصد پیش‌فرض 80/443 هستند؛ UDP/QUIC و همهٔ بازی‌ها یا تماس‌ها پوشش داده نمی‌شوند. شمارش جریان TCP معادل شمارش دستگاه نیست و لینک مشترک، هویت مشترک حساب دارد.
 
-آزمون‌های Go، race، نصب‌کننده، بازیابی/ارتقا و رابط مرورگر در [GitHub Actions](https://github.com/WhiteDNS/Soar-Server/actions/workflows/panel.yml) اجرا می‌شوند. آزمون گوشی فیزیکی، شبکه‌های ایران و بار تولیدی گسترده هنوز کامل نیست. [گزارش اختلال مرورگر](docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md) نتایج و توقف مقطعی مشاهده‌شده را ثبت کرده است؛ پاسخ بررسی ربات آمازون معادل بازشدن کامل فروشگاه نیست.
+آزمون‌های Go، race، نصب‌کننده، بازیابی/ارتقا و رابط مرورگر در [GitHub Actions](https://github.com/rjalilocsdg/Soar-Server/actions/workflows/panel.yml) اجرا می‌شوند. آزمون گوشی فیزیکی، شبکه‌های ایران و بار تولیدی گسترده هنوز کامل نیست. [گزارش اختلال مرورگر](docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md) نتایج و توقف مقطعی مشاهده‌شده را ثبت کرده است؛ پاسخ بررسی ربات آمازون معادل بازشدن کامل فروشگاه نیست.
 
-[دانلود نسخهٔ پیش‌نمایش](https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.6.1-beta3) · [معماری](docs/PANEL-DESIGN.md) · [راهنمای کامل](docs/PANEL.fa.md)
+[دانلود نسخهٔ پایدار](https://github.com/rjalilocsdg/Soar-Server/releases/latest) · [معماری](docs/PANEL-DESIGN.md) · [راهنمای کامل](docs/PANEL.fa.md)
 
 ## پروژهٔ اصلی و مجوزها
 
@@ -92,7 +99,7 @@ sudo apt-get install -y curl
 راهنمای [SERVER-GUIDE.fa.md](SERVER-GUIDE.fa.md) و دستور زیر برای سرور مستقل قدیمی باقی می‌مانند:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/WhiteDNS/Soar-Server/main/setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/rjalilocsdg/Soar-Server/main/setup.sh)
 ```
 
 این دستور **پنل نصب نمی‌کند**؛ مدیریت آن با `sudo soar-manager` است. مهاجرت از پروفایل مشترک سرور مستقل به حساب‌های پنل، به تأیید مهاجرت و لینک‌های تازهٔ حساب‌ها نیاز دارد.
@@ -102,7 +109,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/WhiteDNS/Soar-Server/main/se
 Go 1.26.1، Python 3 و Bash در محیط توسعه لازم‌اند:
 
 ```bash
-python3 scripts/prepare_cotten_engine.py --workspace .engine-source/patched.go.work
+python3 scripts/prepare_panel_engines.py --workspace .engine-source/patched.go.work
 export GOWORK="$PWD/.engine-source/patched.go.work"
 go build -o .engine-source/cotten-client ./.engine-source/CottenDNS/cmd/client
 bash tests/panel_installer_test.sh
@@ -110,11 +117,12 @@ bash tests/panel_bootstrap_test.sh
 PANEL_COTTEN_CLIENT="$PWD/.engine-source/cotten-client" go test ./... -count=1 -timeout 240s
 go test -race ./internal/panel ./internal/panelops -count=1 -timeout 300s
 go vet ./...
-python3 scripts/build_panel_bundle.py
-bash dist/soar-panel-0.6.1-beta3-linux-amd64/panel-install.sh --check-bundle
+python3 scripts/build_panel_bundle.py --arch amd64
+python3 scripts/build_panel_bundle.py --arch arm64
+bash dist/soar-panel-0.8.0-linux-amd64/panel-install.sh --check-bundle
 ```
 
-نسخهٔ پایه، پچ و هش تمام فایل‌های موتور Cotten در `patches/cotten-engine.json`
+نسخهٔ پایه، پچ و هش تمام فایل‌های موتور Cotten در `patches/cotten-engine.json` و `patches/masterdns-engine.json`
 ثبت شده‌اند. ابزار آماده‌سازی، پچ را روی همان commit اعمال و نتیجه را بررسی می‌کند؛
 ساخت بسته نیز سورس متفاوت یا فایل کد اضافه را رد می‌کند. این مرحله تنظیمات،
 کاربران یا پایگاه دادهٔ سرویس در حال اجرا را تغییر نمی‌دهد.

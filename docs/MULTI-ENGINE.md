@@ -31,6 +31,9 @@ The existing `whitedns.profile` version 1 envelope is used for new links,
 with `server.domain`, `server.encryption_key` and `server.encryption_method`.
 The account create/edit form offers 5 (AES-256-GCM, default) or 1 (XOR, weak)
 for Cotten, StormDNS and MasterDNS. Soar keeps its existing encryption.
+The Cotten encryption selector applies to Normal mode; Max retains its native
+encryption. MasterDNS also accepts the upstream `mdns-1.` domain alias while
+exporting the original `master.` domains and key derivation for fork compatibility.
 XOR does not provide AES-GCM confidentiality or authentication; it is optional
 and is not a guarantee of higher speed or DPI resistance. Changing the method
 closes that account’s sessions; refresh its clients’ subscriptions before reconnecting.
@@ -76,8 +79,8 @@ To install the custom Linux amd64 bundle on a supported server, upload the
 archive and run these commands in an interactive SSH terminal:
 
 ```sh
-tar -xzf soar-panel-0.6.1-beta3-linux-amd64.tar.gz
-cd soar-panel-0.6.1-beta3-linux-amd64
+tar -xzf soar-panel-0.10.1-linux-amd64.tar.gz
+cd soar-panel-0.10.1-linux-amd64
 sudo bash panel-install.sh
 ```
 
@@ -87,20 +90,18 @@ then refresh its subscription in the client. This fork’s one-command installer
 and in-panel updater both use releases from `rjalilocsdg/Soar-Server`. The
 original WhiteDNS installer continues to install the original upstream project.
 
-Pinned MIT-licensed engine sources are checked into `third_party/StormDNS`
-and `third_party/MasterDnsVPN`. Each directory retains its original license,
-authors and a commit reference in `UPSTREAM.json`. The integration adds
-`server/server.go`, `internal/config/whitedns.go` and
-`internal/udpserver/whitedns.go`; upstream wire protocol code is unchanged.
-The two engines are compiled into the panel, so no extra daemon, installer
-or host dependency is needed. Do not run their standalone installers over
-the panel: those installers attempt to take over port 53.
+StormDNS remains vendored in `third_party/StormDNS`, with its original MIT
+license and pinned commit in `UPSTREAM.json`. MasterDnsVPN uses its pinned
+upstream source plus `patches/masterdns-engine.json`; the patch includes native
+session response-state synchronization and the embedding API. Cotten uses the
+new pinned source and patch in `patches/cotten-engine.json`, including Normal
+and Max modes. All are compiled into the panel; no extra daemon is installed.
 
-Prepare the existing patched Cotten workspace as described in the README,
+Prepare the verified workspace with `scripts/prepare_panel_engines.py`,
 then build the real native clients for regression tests:
 
 ```sh
-python3 scripts/prepare_cotten_engine.py --workspace .engine-source/patched.go.work
+python3 scripts/prepare_panel_engines.py --workspace .engine-source/patched.go.work
 export GOWORK="$PWD/.engine-source/patched.go.work"
 go build -o .engine-source/storm-client stormdns-go/cmd/client
 go build -o .engine-source/master-client masterdnsvpn-go/cmd/client

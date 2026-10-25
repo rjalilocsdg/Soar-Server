@@ -49,6 +49,7 @@ func execute(args []string) error {
 	cert := f.String("tls-cert", "", "HTTPS certificate PEM file")
 	key := f.String("tls-key", "", "HTTPS private key PEM file")
 	proxy := f.Bool("trust-loopback-proxy", false, "Trust HTTPS forwarding header only from loopback proxy")
+	masterOutput := f.String("masterdns-output", "", "Private MasterDNS installer probe file")
 	output := f.String("output", "", "New private backup file (backup only)")
 	input := f.String("input", "", "Backup to inspect (isolated validation only)")
 	accessFile := f.String("access-file", "", "Machine-local access configuration (defaults beside DB)")
@@ -228,6 +229,9 @@ func execute(args []string) error {
 		if err == nil && *output != "" {
 			err = s.WriteInstallCottenProbe(c.ID, *output)
 		}
+		if err == nil && *masterOutput != "" {
+			err = s.WriteInstallMasterDNSProbe(c.ID, *masterOutput)
+		}
 		if err == nil {
 			fmt.Printf("%s %s %s %d\n", c.ID, c.Zone, c.PublicKey, c.ExpiresAt/1000)
 		}
@@ -309,6 +313,14 @@ func execute(args []string) error {
 		return e
 	}
 	defer access.Close()
+	telegram, telegramErr := panel.NewTelegram(handler, filepath.Join(filepath.Dir(*db), "telegram.json"))
+	if telegramErr != nil {
+		log.Printf("Telegram disabled: %v", telegramErr)
+	} else {
+		botDone := make(chan struct{})
+		go func() { defer close(botDone); telegram.Run(ctx) }()
+		defer func() { stop(); <-botDone }()
+	}
 	server := &http.Server{Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 90 * time.Second, WriteTimeout: 90 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 * 1024}
 	done := make(chan error, 3)
 	go func() { done <- m.Run() }()

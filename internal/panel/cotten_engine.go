@@ -72,6 +72,15 @@ func (m *Manager) runAccount(rt *accountRuntime, seed []byte) {
 		}
 		m.diagnostics.cottenRunning.Add(-1)
 	}
+	rt.masterMu.Lock()
+	master := rt.master
+	rt.masterMu.Unlock()
+	if master != nil {
+		if err := master.Close(); err != nil {
+			m.diagnostics.masterCloseErrors.Add(1)
+		}
+		m.diagnostics.masterRunning.Add(-1)
+	}
 	<-soarDone
 }
 
@@ -140,7 +149,11 @@ func (m *Manager) startCottenWorkers() {
 					var response []byte
 					if job.engine == "stormdns" || job.engine == "masterdns" {
 						if engine, err := m.additionalFor(job.rt, job.engine); err == nil {
-							response = engine.HandleDNS(job.query)
+							if framed, ok := engine.(interface{ HandleDNSTCP([]byte) []byte }); job.tcp && ok {
+								response = framed.HandleDNSTCP(job.query)
+							} else {
+								response = engine.HandleDNS(job.query)
+							}
 						}
 					} else if engine, err := m.cottenFor(job.rt); err == nil {
 						if job.tcp {
@@ -186,6 +199,10 @@ func (m *Manager) routeDNS(query []byte, remote net.Addr, tcp bool, reply func([
 	selected := "soar"
 	payload := false
 	if rt != nil {
+		if name == "mdns-1."+zone || strings.HasSuffix(name, ".mdns-1."+zone) {
+			selected = "masterdns"
+			payload = name != "mdns-1."+zone
+		}
 		for _, engine := range engineOrder[1:] {
 			engineZone := enginePrefix(engine) + zone
 			if name == engineZone || strings.HasSuffix(name, "."+engineZone) {
@@ -210,6 +227,8 @@ func (m *Manager) routeDNS(query []byte, remote net.Addr, tcp bool, reply func([
 			default:
 				if selected == "cotten" {
 					m.diagnostics.cottenQueueDrops.Add(1)
+				} else if selected == "masterdns" {
+					m.diagnostics.masterQueueDrops.Add(1)
 				} else {
 					m.diagnostics.forAdditional(selected).queueDrops.Add(1)
 				}
@@ -361,6 +380,9 @@ func (m *Manager) exchangeEngineDNS(rt *accountRuntime, parent context.Context, 
 		response, err := m.exchangeDNSForEngine(rt, attempt, "udp", endpoint, query, engine)
 		if err != nil {
 			stop()
+			if errors.Is(err, errAntiFlood) || errors.Is(err, ErrDenied) {
+				return nil, err
+			}
 			if parent.Err() == nil && resolverFailure(err, rt) {
 				rt.resolverResult(endpoint, time.Since(started), false)
 			}
@@ -386,7 +408,7 @@ func (m *Manager) exchangeEngineDNS(rt *accountRuntime, parent context.Context, 
 }
 
 func resolverFailure(err error, rt *accountRuntime) bool {
-	return rt.ctx.Err() == nil && !errors.Is(err, ErrDenied) && !errors.Is(err, context.Canceled) && !errors.Is(err, errPacingDeadline) && !errors.Is(err, errAccountStreamLimit) && !errors.Is(err, errServerStreamCapacity) && !errors.Is(err, errDestinationPort)
+	return rt.ctx.Err() == nil && !errors.Is(err, ErrDenied) && !errors.Is(err, context.Canceled) && !errors.Is(err, errPacingDeadline) && !errors.Is(err, errAccountStreamLimit) && !errors.Is(err, errServerStreamCapacity) && !errors.Is(err, errDestinationPort) && !errors.Is(err, errAntiFlood)
 }
 
 func resolverEndpoint(resolver string) string {

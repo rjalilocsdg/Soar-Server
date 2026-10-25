@@ -27,7 +27,7 @@ def prepare(source: Path, check: bool = False) -> dict:
         if check:
             raise RuntimeError("Patched Cotten source is missing; run scripts/prepare_cotten_engine.py first")
         source.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["git", "clone", "--no-checkout", "https://github.com/WhiteDNS/CottenDNS.git", str(source)], check=True)
+        subprocess.run(["git", "clone", "--config", "core.autocrlf=false", "--no-checkout", "https://github.com/WhiteDNS/CottenDNS.git", str(source)], check=True)
         subprocess.run(["git", "-C", str(source), "checkout", "--detach", manifest["base_commit"]], check=True)
 
     if (source / ".git").exists():
@@ -71,7 +71,7 @@ def main() -> None:
         workspace = args.workspace.resolve()
         workspace.parent.mkdir(parents=True, exist_ok=True)
         # JSON quoting is also valid for Go quoted paths, including spaces.
-        modules = [ROOT, source, ROOT / "third_party/StormDNS", ROOT / "third_party/MasterDnsVPN"]
+        modules = [ROOT, source, ROOT / "third_party/StormDNS", ROOT / ".engine-source/MasterDnsVPN"]
         workspace.write_text("go 1.26.1\n\nuse (\n" + "".join("\t" + json.dumps(str(path)) + "\n" for path in modules) + ")\n")
     print(json.dumps({"source": str(source), "base_commit": manifest["base_commit"], "patch_sha256": manifest["patch_sha256"], "verified": True}))
 

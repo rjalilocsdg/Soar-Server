@@ -9,6 +9,12 @@ var engineOrder = []string{"soar", "cotten", "stormdns", "masterdns"}
 
 func enabledEngines(selection string) ([]string, error) {
 	switch selection {
+	case "soar_masterdns":
+		selection = "soar,masterdns"
+	case "cotten_masterdns":
+		selection = "cotten,masterdns"
+	}
+	switch selection {
 	case "", "soar":
 		return []string{"soar"}, nil
 	case "both": // Preserve existing accounts and API semantics.
@@ -67,3 +73,7 @@ func (c Client) encryptionMethod() int {
 	}
 	return c.EncryptionMethod
 }
+
+var profileEngines = engineOrder
+
+func validEngines(selection string) bool { _, err := enabledEngines(selection); return err == nil }

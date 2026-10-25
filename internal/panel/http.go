@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"html"
 	"io"
 	"io/fs"
 	"net"
@@ -46,6 +47,7 @@ type HTTP struct {
 	preview       *restorePreview
 	inspectBackup func(context.Context, string) (BackupSummary, error)
 	access        *AccessController
+	telegram      *Telegram
 }
 
 func NewHTTP(s *Store, m *Manager, trustLoopbackProxy bool) *HTTP {
@@ -178,7 +180,7 @@ func (h *HTTP) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		switch r.URL.Path {
-		case "/", "/index.html", "/app.js", "/maintenance.js", "/i18n.js", "/ltr.css", "/settings.js", "/ui.js", "/tokens.css", "/redesign.css", "/style.css", "/fonts/vazirmatn.ttf", "/fonts/vazirmatn.woff2":
+		case "/", "/index.html", "/app.js", "/antiflood.js", "/maintenance.js", "/telegram.js", "/i18n.js", "/ltr.css", "/settings.js", "/ui.js", "/tokens.css", "/redesign.css", "/style.css", "/fonts/vazirmatn.ttf", "/fonts/vazirmatn.woff2":
 			if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 				raw, e := webFiles.ReadFile("web/index.html")
 				if e != nil {
@@ -190,6 +192,7 @@ func (h *HTTP) serveHTTP(w http.ResponseWriter, r *http.Request) {
 					prefix = h.access.Config().BasePath
 				}
 				body := strings.Replace(string(raw), "<head>", "<head><base href=\""+prefix+"\">", 1)
+				body = strings.NewReplacer("{{PANEL_NAME}}", html.EscapeString(ProductName), "{{PANEL_VERSION}}", html.EscapeString(Version)).Replace(body)
 				w.Header().Set("Content-Type", "text/html; charset=utf-8")
 				if r.Method != "HEAD" {
 					_, _ = io.WriteString(w, body)
@@ -230,8 +233,16 @@ func (h *HTTP) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		h.dashboard(w)
 		return
 	}
+	if r.URL.Path == "/api/telegram" || r.URL.Path == "/api/telegram/test" || r.URL.Path == "/api/telegram/pair" {
+		h.telegramAPI(w, r)
+		return
+	}
 	if r.URL.Path == "/api/diagnostics" && r.Method == "GET" {
 		jsonReply(w, 200, map[string]any{"runtime": h.manager.Diagnostics(), "accounting": h.store.AccountingStats(), "host": h.metrics.sample()})
+		return
+	}
+	if r.URL.Path == "/api/antiflood" || r.URL.Path == "/api/antiflood/release" {
+		h.antiFloodAPI(w, r)
 		return
 	}
 	if h.maintenance(w, r, session) {
@@ -407,7 +418,7 @@ func (h *HTTP) settings(w http.ResponseWriter, r *http.Request) {
 		errorReply(w, 400, e)
 		return
 	}
-	if e := h.manager.Reconcile(); e != nil {
+	if e := h.manager.RestartEngines(); e != nil {
 		errorReply(w, 500, errors.New("saved settings; runtime synchronization failed"))
 		return
 	}
@@ -447,13 +458,13 @@ func (h *HTTP) clientList(w http.ResponseWriter, r *http.Request) {
 			errorReply(w, 400, e)
 			return
 		}
-		c, e := h.store.Create(in)
+		c, e := h.applyAccountAction("create", "", in, nil)
 		if e != nil {
+			if errors.Is(e, errAccountRuntimeSync) {
+				errorReply(w, 500, errors.New("account saved; runtime synchronization failed"))
+				return
+			}
 			errorReply(w, 400, e)
-			return
-		}
-		if e := h.manager.Reconcile(); e != nil {
-			errorReply(w, 500, errors.New("account saved; runtime synchronization failed"))
 			return
 		}
 		jsonReply(w, 201, c)
@@ -526,18 +537,12 @@ func (h *HTTP) clientAction(w http.ResponseWriter, r *http.Request) {
 	case r.Method == "PUT" && action == "":
 		var in ClientInput
 		if e = decodeJSON(w, r, &in); e == nil {
-			c, e = h.store.Edit(id, in)
+			c, e = h.applyAccountAction("edit", id, in, nil)
 		}
 	case r.Method == "DELETE" && action == "":
-		e = h.store.Delete(id)
-	case r.Method == "POST" && action == "reset":
-		h.manager.Disconnect(id)
-		e = h.store.ResetUsage(id)
-	case r.Method == "POST" && action == "rotate":
-		c, e = h.store.Rotate(id)
-	case r.Method == "POST" && action == "disconnect":
-		h.manager.Disconnect(id)
-		e = h.store.Audit("client.disconnected", id)
+		_, e = h.applyAccountAction("delete", id, ClientInput{}, nil)
+	case r.Method == "POST" && (action == "reset" || action == "rotate" || action == "disconnect"):
+		_, e = h.applyAccountAction(action, id, ClientInput{}, nil)
 	default:
 		w.WriteHeader(405)
 		return
@@ -547,11 +552,10 @@ func (h *HTTP) clientAction(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(e, ErrConflict) {
 			status = 409
 		}
+		if errors.Is(e, errAccountRuntimeSync) {
+			status = 500
+		}
 		errorReply(w, status, e)
-		return
-	}
-	if e = h.manager.Reconcile(); e != nil {
-		errorReply(w, 500, errors.New("saved change; runtime synchronization failed"))
 		return
 	}
 	jsonReply(w, 200, map[string]bool{"ok": true})

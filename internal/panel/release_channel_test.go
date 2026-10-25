@@ -3,10 +3,12 @@ package panel
 import "testing"
 
 func releaseFixture(version string, prerelease bool) PanelRelease {
-	r := PanelRelease{Tag: "panel-v" + version, URL: "https://github.com/" + ReleaseRepository + "/releases/tag/panel-v" + version, Prerelease: prerelease}
-	for _, suffix := range []string{".tar.gz", ".tar.gz.sha256"} {
-		name := "soar-panel-" + version + "-linux-amd64" + suffix
-		r.Assets = append(r.Assets, ReleaseAsset{Name: name, URL: "https://github.com/" + ReleaseRepository + "/releases/download/" + r.Tag + "/" + name, Size: 100})
+	r := PanelRelease{Tag: "panel-v" + version, URL: "https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v" + version, Prerelease: prerelease}
+	for _, arch := range []string{"amd64", "arm64"} {
+		for _, suffix := range []string{".tar.gz", ".tar.gz.sha256"} {
+			name := "soar-panel-" + version + "-linux-" + arch + suffix
+			r.Assets = append(r.Assets, ReleaseAsset{Name: name, URL: "https://github.com/rjalilocsdg/Soar-Server/releases/download/" + r.Tag + "/" + name, Size: 100})
+		}
 	}
 	return r
 }
@@ -35,13 +37,39 @@ func TestBetaCanGraduateToStable(t *testing.T) {
 	}
 }
 
-func TestForkReleaseRejectsOtherRepositoryAssets(t *testing.T) {
-	r := releaseFixture(Version, true)
-	if err := validatePanelRelease(r, Version); err != nil {
-		t.Fatal("fork preview rejected", err)
+func TestReleaseRequiresAssetsForTargetArchitecture(t *testing.T) {
+	for _, arch := range []string{"amd64", "arm64"} {
+		t.Run(arch, func(t *testing.T) {
+			r := releaseFixture("0.7.0", false)
+			if e := validatePanelReleaseArch(r, "0.7.0", arch); e != nil {
+				t.Fatal(e)
+			}
+			archive, e := PanelArchiveName("0.7.0", arch)
+			if e != nil || archive != "soar-panel-0.7.0-linux-"+arch+".tar.gz" {
+				t.Fatal("incorrect target archive", archive, e)
+			}
+			assets := []ReleaseAsset{}
+			for _, a := range r.Assets {
+				if a.Name != archive && a.Name != archive+".sha256" {
+					assets = append(assets, a)
+				}
+			}
+			r.Assets = assets
+			if e := validatePanelReleaseArch(r, "0.7.0", arch); e == nil {
+				t.Fatal("other architecture's assets accepted")
+			}
+			original := releaseFixture("0.7.0", false)
+			for _, a := range original.Assets {
+				if a.Name == archive {
+					r.Assets = append(r.Assets, a, a)
+				}
+			}
+			if e := validatePanelReleaseArch(r, "0.7.0", arch); e == nil {
+				t.Fatal("duplicate archive substituted for missing checksum")
+			}
+		})
 	}
-	r.Assets[0].URL = "https://github.com/WhiteDNS/Soar-Server/releases/download/" + r.Tag + "/" + r.Assets[0].Name
-	if err := validatePanelRelease(r, Version); err == nil {
-		t.Fatal("accepted a bundle from a different release repository")
+	if _, e := PanelArchiveName("0.7.0", "ppc64le"); e == nil {
+		t.Fatal("unsupported architecture accepted")
 	}
 }

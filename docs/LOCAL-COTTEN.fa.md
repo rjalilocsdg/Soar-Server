@@ -1,14 +1,16 @@
 # نصب Soar و Cotten از فایل بسته
 
-روش معمول نصب در [راهنمای قدم‌به‌قدم](PANEL.fa.md) آمده است. اگر فایل نصب را جداگانه می‌فرستید، آرشیو `soar-panel-0.6.1-beta3-linux-amd64.tar.gz` و checksum آن را از [انتشار 0.6.1-beta3](https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.6.1-beta3) دریافت کنید و مراحل زیر را انجام دهید.
+از نسخهٔ 0.10.1 پنل، حالت‌های Normal و Max در همان پروفایل Cotten و با همان دامنه و کلید حساب کار می‌کنند. برای دامنه‌های بلند حساب، اندروید را به 1.6.14 و دسکتاپ را به 1.4.5 ارتقا دهید؛ این نسخه‌ها ظرفیت نام DNS برای handshake مکس را خودکار تنظیم می‌کنند. پیشوند `cottenmax-v1` را دستی به دامنه اضافه نکنید. حجم، محدودیت اتصال و غیرفعال‌سازی حساب در هر دو حالت توسط پنل اعمال می‌شوند.
+
+روش معمول نصب در [راهنمای قدم‌به‌قدم](PANEL.fa.md) آمده است. اگر فایل نصب را جداگانه می‌فرستید، آرشیو `soar-panel-0.6.0-linux-amd64.tar.gz` و checksum آن را از [انتشار 0.6.0](https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.6.0) دریافت کنید و مراحل زیر را انجام دهید.
 
 ۱. فایل را بدون بازکردن روی ویندوز، در پوشهٔ `/root` سرور Ubuntu یا Debian کپی کنید؛ همان روشی که برای فرستادن فایل به سرور استفاده می‌کنید کافی است.
 
 ۲. با SSH و کاربر root وارد سرور شوید و این سه دستور را به‌ترتیب اجرا کنید:
 
 ```bash
-tar -xzf /root/soar-panel-0.6.1-beta3-linux-amd64.tar.gz -C /root
-cd /root/soar-panel-0.6.1-beta3-linux-amd64
+tar -xzf /root/soar-panel-0.6.0-linux-amd64.tar.gz -C /root
+cd /root/soar-panel-0.6.0-linux-amd64
 bash panel-install.sh
 ```
 

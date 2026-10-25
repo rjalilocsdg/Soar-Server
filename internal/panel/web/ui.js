@@ -25,6 +25,8 @@ const panelUI = (() => {
   user:'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M4 21v-2a8 8 0 0 1 16 0v2',
   lock:'M5 10h14v11H5z M8 10V7a4 4 0 0 1 8 0v3 M12 14v3',
   menu:'M4 6h16 M4 12h16 M4 18h16',
+  rail:'M3 4h18v16H3z M9 4v16 M13 9l3 3-3 3',
+  fold:'M14 7l-5 5 5 5',
   close:'M6 6l12 12 M18 6 6 18',
   arrow:'M19 12H5 m6-6-6 6 6 6',
   more:'M5 12h.01 M12 12h.01 M19 12h.01',
@@ -64,8 +66,9 @@ const panelUI = (() => {
  }
  function openSelect(select){
   closeSelectMenu();closeActionMenu(false);
-  // Modal dialogs make elements outside their subtree inert, including popovers.
-  (select.closest("dialog")||document.body).append(selectMenu);currentSelect=select;const button=selects.get(select);button.setAttribute('aria-expanded','true');selectMenu.setAttribute('aria-labelledby',button.getAttribute('aria-labelledby'));
+  // A modal dialog makes nodes outside its subtree inert, including top-layer popovers.
+  (select.closest('dialog')||document.body).append(selectMenu);
+  currentSelect=select;const button=selects.get(select);button.setAttribute('aria-expanded','true');selectMenu.setAttribute('aria-labelledby',button.getAttribute('aria-labelledby'));
   selectMenu.replaceChildren(...[...select.options].map((option,index)=>{
    const item=document.createElement('div');item.id=select.id+'-option-'+index;item.dataset.index=index;item.className='select-option';item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.selected));if(option.disabled)item.setAttribute('aria-disabled','true');
    const label=document.createElement('span');label.textContent=option.textContent;item.append(label,icon('check'));
@@ -149,11 +152,57 @@ const panelUI = (() => {
  let theme='dark';try{theme=localStorage.getItem('soar-theme')==='light'?'light':'dark';}catch{}setTheme(theme);
  get('login-theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
  get('password-toggle').onclick=()=>{const input=get('login-password'),shown=input.type==='password';input.type=shown?'text':'password';get('password-toggle').setAttribute('aria-pressed',String(shown));get('password-toggle').setAttribute('aria-label',shown?panelText("پنهان کردن رمز عبور"):panelText("نمایش رمز عبور"));};
- function syncDrawer(){if(innerWidth>800){document.body.classList.remove('menu-open');get('menu-toggle').setAttribute('aria-expanded','false');}const closed=innerWidth<=800&&!document.body.classList.contains('menu-open'),rail=document.querySelector('.sidebar');rail.inert=closed;if(closed)rail.setAttribute('aria-hidden','true');else rail.removeAttribute('aria-hidden');}
- function closeMenu(){const opened=document.body.classList.contains('menu-open');document.body.classList.remove('menu-open');get('menu-toggle').setAttribute('aria-expanded','false');if(opened)get('menu-toggle').focus();syncDrawer();}
- function toggleMenu(){const open=document.body.classList.toggle('menu-open');get('menu-toggle').setAttribute('aria-expanded',String(open));syncDrawer();if(open)document.querySelector('nav a[aria-current=page]').focus();}
+ // Desktop keeps an icon rail; mobile uses a modal drawer. The saved desktop
+ // preference never hides labels or changes the drawer's behavior on a phone.
+ let railCollapsed=false;
+ try{railCollapsed=localStorage.getItem('whitedns-panel-sidebar')==='compact';}catch{}
+ document.body.classList.toggle('sidebar-collapsed',railCollapsed);
+ const railFoot=document.querySelector('.sidebar-foot');railFoot.dataset.version='v'+railFoot.querySelector('[data-panel-version]').textContent.trim();
+ for(const link of document.querySelectorAll('nav a[data-page]')){
+  const label=document.createElement('span');label.className='nav-label';
+  for(const child of [...link.childNodes])if(child.nodeType===Node.TEXT_NODE)label.append(child);
+  link.querySelector('[data-icon]').after(label);
+  link.setAttribute('aria-label',label.textContent.trim());
+ }
+ const railHint=document.createElement('div');railHint.id='rail-tooltip';railHint.className='rail-tooltip';railHint.setAttribute('role','tooltip');railHint.hidden=true;document.body.append(railHint);
+ let hintLink=null,hintTimer;
+ function hideRailHint(){clearTimeout(hintTimer);if(hintLink)hintLink.removeAttribute('aria-describedby');hintLink=null;railHint.hidden=true;}
+ function showRailHint(link){
+  hideRailHint();if(innerWidth<=800||!railCollapsed)return;
+  hintLink=link;railHint.textContent=link.getAttribute('aria-label');railHint.hidden=false;link.setAttribute('aria-describedby',railHint.id);
+  const r=link.getBoundingClientRect(),m=railHint.getBoundingClientRect(),left=document.documentElement.dir==='ltr'?r.right+12:r.left-m.width-12;
+  railHint.style.left=Math.max(12,Math.min(innerWidth-m.width-12,left))+'px';railHint.style.top=Math.max(12,Math.min(innerHeight-m.height-12,r.y+(r.height-m.height)/2))+'px';
+ }
+ for(const link of document.querySelectorAll('nav a[data-page]')){
+  link.addEventListener('pointerenter',()=>{hintTimer=setTimeout(()=>showRailHint(link),800);});
+  link.addEventListener('pointerleave',()=>{clearTimeout(hintTimer);if(document.activeElement!==link)hideRailHint();});
+  link.addEventListener('focus',()=>showRailHint(link));link.addEventListener('blur',hideRailHint);
+ }
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')hideRailHint();});
+ const skip=document.createElement('a');skip.className='skip-link';skip.href='#main';skip.textContent=panelText('پرش به محتوای اصلی');
+ skip.onclick=e=>{e.preventDefault();get('main').focus();};get('app').prepend(skip);get('main').tabIndex=-1;
+ function syncDrawer(){
+  hideRailHint();
+  const mobile=innerWidth<=800;if(!mobile)document.body.classList.remove('menu-open');
+  const opened=mobile&&document.body.classList.contains('menu-open'),closed=mobile&&!opened,rail=document.querySelector('.sidebar'),toggle=get('menu-toggle');
+  rail.inert=closed;document.querySelector('.workspace').inert=opened;
+  if(closed)rail.setAttribute('aria-hidden','true');else rail.removeAttribute('aria-hidden');
+  if(opened){rail.setAttribute('role','dialog');rail.setAttribute('aria-modal','true');rail.setAttribute('aria-label',panelText('صفحات پنل'));}
+  else{rail.removeAttribute('role');rail.removeAttribute('aria-modal');rail.removeAttribute('aria-label');}
+  toggle.setAttribute('aria-expanded',String(mobile?opened:!railCollapsed));
+  const label=mobile?panelText('باز کردن منو'):railCollapsed?panelText('گسترش منو'):panelText('جمع کردن منو');
+  toggle.setAttribute('aria-label',label);toggle.title=label;toggle.replaceChildren(icon(mobile?'menu':'rail'));
+  const fold=get('sidebar-fold');fold.setAttribute('aria-expanded',String(!railCollapsed));fold.setAttribute('aria-label',label);fold.title=label;
+ }
+ function closeMenu(){const opened=document.body.classList.contains('menu-open');document.body.classList.remove('menu-open');syncDrawer();if(opened)get('menu-toggle').focus({preventScroll:true});}
+ function toggleMenu(){
+  closeSelectMenu();closeActionMenu(false);
+  if(innerWidth>800){railCollapsed=!railCollapsed;document.body.classList.toggle('sidebar-collapsed',railCollapsed);try{localStorage.setItem('whitedns-panel-sidebar',railCollapsed?'compact':'expanded');}catch{}syncDrawer();return;}
+  const open=document.body.classList.toggle('menu-open');syncDrawer();if(open)(document.querySelector('nav a[aria-current=page]')||get('rail-close')).focus({preventScroll:true});
+ }
  window.addEventListener('resize',syncDrawer);syncDrawer();
  get('nav-backdrop').onclick=closeMenu;get('rail-close').onclick=closeMenu;
+ get('sidebar-fold').onclick=toggleMenu;
  document.querySelectorAll('.sidebar a[href^="#"]').forEach(link=>link.addEventListener('click',closeMenu));
  document.addEventListener('keydown',event=>{if(!document.body.classList.contains('menu-open'))return;if(event.key==='Escape'){closeMenu();get('menu-toggle').focus();}if(event.key==='Tab'){const links=[...document.querySelectorAll('.sidebar a,.sidebar button')].filter(el=>el.getClientRects().length);const first=links[0],last=links.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
  function size(n){if(n==null)return '—';if(n===0)return '0 B';const units=['B','KiB','MiB','GiB','TiB'];const i=Math.max(0,Math.min(4,Math.floor(Math.log(n)/Math.log(1024))));return `${(n/1024**i).toLocaleString('en-US',{maximumFractionDigits:i?2:0})} ${units[i]}`;}
@@ -191,9 +240,9 @@ const panelUI = (() => {
   text('send-rate',sample.send==null?'—':size(sample.send)+'/s');text('receive-rate',sample.receive==null?'—':size(sample.receive)+'/s');
   text('dns-send-total',size(down));text('dns-receive-total',size(up));text('dns-traffic',size(up+down));
   text('uptime',fmt.format(Math.floor(d.uptime_seconds/3600))+panelText(" ساعت و ")+fmt.format(Math.floor(d.uptime_seconds/60)%60)+panelText(" دقیقه"));
-  text('platform',h.platform);text('panel-version',d.version);text('footer-version',d.version);
+  text('platform',h.platform);for(const el of document.querySelectorAll('[data-panel-version]'))el.textContent=d.version;
   const diagnostics=d.diagnostics||{},accounting=d.accounting||{},metric=n=>Number.isFinite(n)?fmt.format(n):'—',ratio=(used,limit)=>metric(used)+' / '+metric(limit);
-  text('diag-udp-errors',metric(diagnostics.udp_write_errors));text('diag-queue-drops',metric((diagnostics.soar_queue_drops||0)+(diagnostics.cotten_queue_drops||0)+Object.values(diagnostics.additional_engines||{}).reduce((n,e)=>n+(e.queue_drops||0),0)));
+  text('diag-udp-errors',metric(diagnostics.udp_write_errors));text('diag-queue-drops',metric((diagnostics.soar_queue_drops||0)+(diagnostics.cotten_queue_drops||0)+(diagnostics.masterdns_queue_drops||0)+(diagnostics.additional_engines?.stormdns?.queue_drops||0)));
   text('diag-dial-failures',metric(diagnostics.dial_failures));text('diag-dial-time',diagnostics.dial_attempts?((diagnostics.dial_latency_microseconds||0)/diagnostics.dial_attempts/1000).toFixed(1)+' ms':'—');
   text('diag-fds',ratio(h.file_descriptors_used,h.file_descriptors_limit));text('diag-conntrack',ratio(h.conntrack_used,h.conntrack_limit));text('diag-accounting',ratio(accounting.requests,accounting.commits));text('diag-accept-retries',metric(diagnostics.tcp_accept_retries));
   text('stat-accounts',fmt.format(d.accounts));text('stat-active',fmt.format(d.states.active)+panelText(" حساب فعال"));text('stat-up',size(d.upload_bytes));text('stat-down',size(d.download_bytes));
