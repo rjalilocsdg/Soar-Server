@@ -1,6 +1,6 @@
 # Install and use WhiteDNS Soar Panel
 
-This fork’s **0.6.1-beta2** preview adds StormDNS and MasterDnsVPN alongside
+This fork’s **0.6.1-beta3** preview adds StormDNS and MasterDnsVPN alongside
 Soar and CottenDNS. Installation and in-panel updates use this fork’s releases.
 
 WhiteDNS builds the management panel and installer. The tunnel engine is
