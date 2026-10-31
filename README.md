@@ -1,7 +1,8 @@
-> Fork release **0.14.1** merges upstream through `b26b402` (Telegram, ARM64,
-> anti-flood protection, UI updates and CottenMax) while preserving StormDNS,
-> 3–26-character account labels and optional XOR. Existing beta3 account links,
-> keys and subscriptions remain valid. [Fork integration details](docs/MULTI-ENGINE.md).
+> Fork release **0.14.1** merges upstream through `1079be8` (panel 0.14.0),
+> updates Soar to v0.2.4 and MasterDnsVPN to release `5f83ee9`, and preserves
+> StormDNS, Cotten Normal/Max, 3–26-character account labels and optional XOR.
+> Existing account links, keys and subscriptions remain valid.
+> [Release details](docs/RELEASE-panel-0.14.1.md) · [Four-engine guide](docs/MULTI-ENGINE.md).
 
 ![Soar Server and WhiteDNS management dashboard](docs/assets/soar-server-banner.png)
 
@@ -13,9 +14,9 @@
 
 [دامنه‌های جایگزین تونل و پنل](docs/DOMAINS.fa.md): حداکثر ۸ دامنه برای هر بخش، بدون ساخت دوبارهٔ حساب‌ها یا تغییر سهمیه. نصب اولیه همچنان فقط یک دامنه می‌خواهد.
 
-[پراکسی خروجی، پورت‌های Upstream و گزارش ترافیک — فارسی](docs/EGRESS.fa.md) · [English](docs/EGRESS.en.md): راهنمای قدم‌به‌قدم هر سه موتور، ورودی لوکال Xray/sing-box، فیلتر زمانی و دانلود CSV/JSON.
+[پراکسی خروجی، پورت‌های Upstream و گزارش ترافیک — فارسی](docs/EGRESS.fa.md) · [English](docs/EGRESS.en.md): راهنمای قدم‌به‌قدم هر چهار موتور، ورودی لوکال Xray/sing-box، فیلتر زمانی و دانلود CSV/JSON.
 
-پنل مدیریت سرور **WhiteDNS 0.14.0** با موتورهای **Soar، Cotten و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
+پنل مدیریت سرور **WhiteDNS 0.14.1** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
 
 **CottenDNS** نیز از [فورک سازگار WhiteDNS](https://github.com/WhiteDNS/CottenDns) و با حفظ نام و مجوز نویسندگان اصلی اضافه شده است.
 
@@ -58,7 +59,7 @@ sudo apt-get install -y curl
 
 برای ساب کامل از **[WhiteDNS 1.6.8 یا جدیدتر](https://github.com/WhiteDNS/WhiteDNS-Android/releases/latest)** استفاده کنید. پس از تغییر تنظیمات تونل، ساب را در اپ تازه‌سازی کنید؛ برای لینک مستقیم، پروفایل را دوباره Import کنید. [راهنمای ساب، حجم، انقضا و تعویض لینک](docs/SUBSCRIPTIONS.md) · [گزارش آزمون پنل و اپ](docs/SUBSCRIPTIONS-VERIFICATION-2026-10-18.md).
 
-در فرم حساب می‌توانید Soar، Cotten، MasterDNS یا هر ترکیب از آن‌ها را انتخاب کنید. «هر سه موتور» یک ساب با سه روش اتصال می‌دهد؛ حجم، انقضا و سرعت مشترک‌اند و رکورد DNS دیگری لازم نیست. حساب‌های موجود انتخاب قبلی خود را حفظ می‌کنند؛ برای افزودن MasterDNS، حساب را ویرایش و سپس ساب را تازه‌سازی کنید. [راهنمای MasterDNS](docs/MASTERDNS.md).
+در فرم حساب می‌توانید Soar، Cotten، MasterDNS یا هر ترکیب از آن‌ها را انتخاب کنید. «هر چهار موتور» یک ساب با سه روش اتصال می‌دهد؛ حجم، انقضا و سرعت مشترک‌اند و رکورد DNS دیگری لازم نیست. حساب‌های موجود انتخاب قبلی خود را حفظ می‌کنند؛ برای افزودن MasterDNS، حساب را ویرایش و سپس ساب را تازه‌سازی کنید. [راهنمای MasterDNS](docs/MASTERDNS.md).
 
 لینک نصب ثابت است و با انتشار نسخهٔ پایدار جدید به تغییر دستور یا شمارهٔ نسخه نیاز ندارد. نسخه‌های آزمایشی نصب نمی‌شوند؛ اگر یافتن نسخه، دریافت بستهٔ معماری سرور یا بررسی checksum شکست بخورد، نصب پیش از تغییر سرویس متوقف می‌شود و نسخهٔ قدیمی جایگزین نمی‌شود.
 
