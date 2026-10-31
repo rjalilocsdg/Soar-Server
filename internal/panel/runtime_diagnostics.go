@@ -16,6 +16,7 @@ func (m *Manager) writeDNSUDP(packet []byte, remote net.Addr) (int, error) {
 	}
 	if err != nil {
 		m.diagnostics.udpWriteErrors.Add(1)
+		m.logEvent("error", "connection", "", "dns_udp_write_failed", err, 0)
 	}
 	return n, err
 }
@@ -70,6 +71,7 @@ type RuntimeDiagnostics struct {
 
 type runtimeCounters struct {
 	additional                                                                                          [2]engineCounters
+	logs                                                                                                *diagnosticLogs
 	masterQueueDrops, masterStarts, masterStartErrors, masterCloseErrors                                atomic.Uint64
 	masterOpenedStreams, masterClosedStreams                                                            atomic.Uint64
 	masterRunning, masterActiveStreams                                                                  atomic.Int64
@@ -209,6 +211,13 @@ func (h engineDiagnosticHandler) Enabled(_ context.Context, level slog.Level) bo
 	return level >= slog.LevelWarn
 }
 func (h engineDiagnosticHandler) Handle(_ context.Context, record slog.Record) error {
+	if h.counters.logs != nil {
+		level, code := "warn", "engine_warning"
+		if record.Level >= slog.LevelError {
+			level, code = "error", "engine_error"
+		}
+		h.counters.logs.add(DiagnosticLog{Level: level, Source: "soar", Code: code})
+	}
 	if record.Level >= slog.LevelError {
 		h.counters.soarLogErrors.Add(1)
 	} else {

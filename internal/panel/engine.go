@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/netip"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -134,12 +135,21 @@ type Manager struct {
 	started               time.Time
 	workers               sync.WaitGroup
 	diagnostics           runtimeCounters
+	logs                  diagnosticLogs
+	egress                EgressConfig
+	outbound              *outboundJournal
 }
 
 func NewManager(ctx context.Context, s *Store, pc net.PacketConn) *Manager {
 	ctx, cancel := context.WithCancel(ctx)
 	m := &Manager{ctx: ctx, cancel: cancel, cottenJobs: make(chan cottenJob, 128), store: s, pc: pc, accounts: map[string]*accountRuntime{}, zones: map[string]*accountRuntime{}, started: time.Now()}
 	m.flood = newFloodGuard(s)
+	if s != nil {
+		m.logs.open(diagnosticLogPath(s))
+		m.outbound = newOutboundJournal(filepath.Join(filepath.Dir(s.db.Path()), "outbound"))
+	}
+	m.diagnostics.logs = &m.logs
+	m.logEvent("info", "panel", "", "manager_started", nil, 0)
 	rand.Read(m.domainProofKey[:])
 	return m
 }
@@ -151,7 +161,13 @@ func (m *Manager) Reconcile() error {
 // The DNS listener and management server stay available; account identities,
 // keys, subscriptions and persisted usage are unchanged.
 func (m *Manager) RestartEngines() error {
-	return m.reconcile(true)
+	err := m.reconcile(true)
+	if err != nil {
+		m.logEvent("error", "panel", "", "engine_restart_failed", err, 0)
+	} else {
+		m.logEvent("info", "panel", "", "engines_restarted", nil, 0)
+	}
+	return err
 }
 
 func (m *Manager) reconcile(restart bool) error {
@@ -168,9 +184,15 @@ func (m *Manager) reconcile(restart bool) error {
 	if e != nil {
 		return e
 	}
+	egress, e := m.store.Egress()
+	if e != nil {
+		return e
+	}
+	egress.prepare()
 	if e = m.flood.configure(cfg.antiFloodPolicy(), list); e != nil {
 		return e
 	}
+	m.outbound.configure(egress.Logs)
 	desired := map[string]Client{}
 	for _, c := range list {
 		if isInstallProbe(c) && c.Status(time.Now()) == "expired" {
@@ -186,10 +208,12 @@ func (m *Manager) reconcile(restart bool) error {
 	var retired []*accountRuntime
 	var create []Client
 	m.mu.Lock()
+	egressChanged := m.egress.Revision != egress.Revision
 	m.cfg = cfg
+	m.egress = egress
 	for id, r := range m.accounts {
 		c, ok := desired[id]
-		if restart || !ok || r.ctx.Err() != nil || c.Zone != r.client.Zone || c.PublicKey != r.client.PublicKey || c.Engines != r.client.Engines ||
+		if restart || egressChanged || !ok || r.ctx.Err() != nil || c.Zone != r.client.Zone || c.PublicKey != r.client.PublicKey || c.Engines != r.client.Engines ||
 			c.encryptionMethod() != r.client.encryptionMethod() || c.StreamLimit != r.client.StreamLimit || c.UsageEpoch != r.client.UsageEpoch ||
 			c.MasterDNSSessionLimit != r.client.MasterDNSSessionLimit || c.SoarSessionLimit != r.client.SoarSessionLimit || c.CottenSessionLimit != r.client.CottenSessionLimit ||
 			strings.Join(r.zones, ",") != strings.Join(cfg.accountZones(c), ",") {
@@ -246,6 +270,8 @@ func (m *Manager) reconcile(restart bool) error {
 	return nil
 }
 func (m *Manager) Run() error {
+	defer m.logs.flush()
+	defer m.outbound.close()
 	if e := m.Reconcile(); e != nil {
 		return e
 	}
@@ -269,7 +295,12 @@ func (m *Manager) Run() error {
 			case <-done:
 				return
 			case <-ticker.C:
-				_ = m.Reconcile()
+				if err := m.Reconcile(); err != nil {
+					m.logEvent("error", "panel", "", "reconcile_failed", err, 0)
+				}
+				if time.Now().Unix()%5 == 0 {
+					m.logs.flush()
+				}
 			}
 		}
 	}()
@@ -441,13 +472,25 @@ func (m *Manager) dialEgress(r *accountRuntime, ctx context.Context, network, ad
 	}
 	return m.dialEgressFor(r, ctx, network, addr, resolver, engine)
 }
-func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network, addr string, resolver bool, engine upstreamEngine) (net.Conn, error) {
+func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network, addr string, resolver bool, engine upstreamEngine) (connection net.Conn, resultErr error) {
+	startedAt := time.Now()
+	m.mu.RLock()
+	route := m.egress.route(engine)
+	m.mu.RUnlock()
+	flow := m.outbound.begin(r.client.ID, engine, network, addr, route, resolver)
+	transferredFlow := false
+	defer func() {
+		if !transferredFlow {
+			flow.finish(resultErr)
+		}
+	}()
 	c, e := m.store.Get(r.client.ID)
 	if e != nil || c.Status(time.Now()) != "active" {
 		m.diagnostics.rejectedInactive.Add(1)
+		m.logEvent("warn", engineLogSource(engine), r.client.ID, "connection_rejected", ErrDenied, 0)
 		return nil, ErrDenied
 	}
-	_, port, e := net.SplitHostPort(addr)
+	host, port, e := net.SplitHostPort(addr)
 	if e != nil {
 		return nil, e
 	}
@@ -456,12 +499,7 @@ func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network,
 		return nil, e
 	}
 	m.mu.RLock()
-	allowed := false
-	for _, v := range m.cfg.AllowPorts {
-		if uint64(v) == p {
-			allowed = true
-		}
-	}
+	allowed := route.allows(uint16(p), m.cfg.AllowPorts)
 	m.mu.RUnlock()
 	if resolver {
 		allowed = false
@@ -476,12 +514,34 @@ func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network,
 	}
 	if !allowed {
 		m.diagnostics.rejectedPolicy.Add(1)
+		m.logEvent("warn", engineLogSource(engine), r.client.ID, "connection_rejected", errDestinationPort, 0)
 		return nil, errDestinationPort
+	}
+	// Reject transports that cannot traverse CONNECT before even resolving the
+	// requested name: an unsupported UDP request must not generate DNS traffic.
+	if strings.HasPrefix(network, "udp") && (route.Mode == "http" || route.Mode == "https") {
+		m.diagnostics.rejectedPolicy.Add(1)
+		m.logEvent("warn", engineLogSource(engine), r.client.ID, "connection_rejected", errProxyUDP, 0)
+		return nil, errProxyUDP
+	}
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	stop := context.AfterFunc(r.ctx, cancel)
+	defer stop()
+	var resolved []netip.Addr
+	if route.proxy() {
+		if _, err := netip.ParseAddr(host); err != nil {
+			resolved, e = m.lookupViaProxy(ctx, r, engine, host)
+			if e != nil {
+				return nil, e
+			}
+		}
 	}
 	r.mu.Lock()
 	if r.closed || c.StreamLimit > 0 && len(r.conns)+r.pending >= c.StreamLimit {
 		r.mu.Unlock()
 		m.diagnostics.rejectedAccountLimit.Add(1)
+		m.logEvent("warn", engineLogSource(engine), r.client.ID, "connection_rejected", errAccountStreamLimit, 0)
 		return nil, errAccountStreamLimit
 	}
 	r.pending++
@@ -489,6 +549,7 @@ func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network,
 	defer func() { r.mu.Lock(); r.pending--; r.mu.Unlock() }()
 	if !m.reserveStream() {
 		m.diagnostics.rejectedServerLimit.Add(1)
+		m.logEvent("warn", engineLogSource(engine), r.client.ID, "connection_rejected", errServerStreamCapacity, 0)
 		return nil, errServerStreamCapacity
 	}
 	transferred := false
@@ -499,6 +560,7 @@ func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network,
 	}()
 	lease, err, quarantined := m.flood.begin(c.ID, resolver, time.Now())
 	if err != nil {
+		m.logEvent("warn", engineLogSource(engine), r.client.ID, "connection_rejected", err, 0)
 		if quarantined {
 			m.Disconnect(c.ID)
 		}
@@ -509,26 +571,33 @@ func (m *Manager) dialEgressFor(r *accountRuntime, ctx context.Context, network,
 			lease.release()
 		}
 	}()
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	stop := context.AfterFunc(r.ctx, cancel)
-	defer stop()
 	m.diagnostics.dialAttempts.Add(1)
 	started := time.Now()
-	upstream, e := m.guardedDial(ctx, network, addr, resolver, lease)
+	upstream, e := m.guardedDialRoute(ctx, network, addr, resolver, lease, route, flow, resolved)
 	m.diagnostics.recordDial(time.Since(started), e != nil)
 	if e != nil {
+		code := "connection_failed"
+		if resolver {
+			code = "resolver_connection_failed"
+		}
+		m.logEvent("error", engineLogSource(engine), r.client.ID, code, e, time.Since(startedAt))
 		return nil, e
 	}
-	mc := &meterConn{Conn: upstream, manager: m, rt: r, datagram: strings.HasPrefix(network, "udp"), engine: engine, flood: lease}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.closed || r.ctx.Err() != nil {
 		upstream.Close()
 		return nil, ErrDenied
 	}
+	if flow != nil {
+		upstream = &outboundObservedConn{Conn: upstream, flow: flow}
+	}
+	mc := &meterConn{Conn: upstream, manager: m, rt: r, datagram: strings.HasPrefix(network, "udp"), engine: engine, flood: lease}
 	r.conns[mc] = struct{}{}
+	flow.opened()
+	transferredFlow = true
 	m.diagnostics.upstreamOpened(engine)
+	m.logEvent("info", engineLogSource(engine), r.client.ID, "connection_opened", nil, time.Since(startedAt))
 	transferred = true
 	return mc, nil
 }
@@ -608,6 +677,9 @@ func (c *meterConn) Close() error {
 		c.manager.active.Add(^uint64(0))
 		c.flood.release()
 		c.manager.diagnostics.upstreamClosed(c.engine, e)
+		if e != nil && !errors.Is(e, net.ErrClosed) {
+			c.manager.logEvent("warn", engineLogSource(c.engine), c.rt.client.ID, "connection_close_failed", e, 0)
+		}
 	})
 	return e
 }
@@ -624,7 +696,8 @@ func (c *meterConn) chunk(p []byte, rate int64) []byte {
 	}
 	return p[:n]
 }
-func (c *meterConn) Read(p []byte) (int, error) {
+func (c *meterConn) Read(p []byte) (read int, err error) {
+	defer func() { c.logStreamError("stream_read_failed", err) }()
 	if c.datagram {
 		return c.readDatagram(p)
 	}
@@ -652,7 +725,8 @@ func (c *meterConn) Read(p []byte) (int, error) {
 	}
 	return n, e
 }
-func (c *meterConn) Write(p []byte) (int, error) {
+func (c *meterConn) Write(p []byte) (written int, err error) {
+	defer func() { c.logStreamError("stream_write_failed", err) }()
 	if c.datagram {
 		return c.writeDatagram(p)
 	}

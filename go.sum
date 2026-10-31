@@ -3,6 +3,7 @@ github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2
 github.com/WhiteDNS/CottenDNS v0.0.0-20261024182838-7db7b73658c7/go.mod h1:pEWfPJF7EAz4JhrgUiH4LwWOjdgGIfcp15Vdo+2RzGk=
 github.com/getlantern/soar v0.2.3 h1:BAahWy3b4J6wtrAJD7WgoO2O+x2Q3T6KN2r0E3ogNgs=
 github.com/getlantern/soar v0.2.3/go.mod h1:6T2+Kbx0GVqYIHqfEaUqlYI5ZRRVZYYhuoMWcxHC+xA=
+github.com/getlantern/soar v0.2.4/go.mod h1:6T2+Kbx0GVqYIHqfEaUqlYI5ZRRVZYYhuoMWcxHC+xA=
 github.com/klauspost/compress v1.18.5 h1:/h1gH5Ce+VWNLSWqPzOVn6XBO+vJbCNGvjoaGBFW2IE=
 github.com/klauspost/compress v1.18.5/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
@@ -10,6 +11,7 @@ github.com/klauspost/cpuid/v2 v2.3.0/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu
 github.com/klauspost/reedsolomon v1.14.1 h1:swE9kzyWXD/wVG+l5Pe8bWnQ0giIY7D1GjCBKk3kG2U=
 github.com/klauspost/reedsolomon v1.14.1/go.mod h1:yjqqjgMTQkBUHSG97/rm4zipffCNbCiZcB3kTqr++sQ=
 github.com/masterking32/MasterDnsVPN v0.0.0-20260829205859-acbf1c61f907/go.mod h1:QakxWXe6vEM0QJf2+LK5JnqtGXHQYx8EtP66P5dGty0=
+github.com/masterking32/MasterDnsVPN v0.0.0-20261026100431-5f83ee9a1690/go.mod h1:QakxWXe6vEM0QJf2+LK5JnqtGXHQYx8EtP66P5dGty0=
 github.com/pierrec/lz4/v4 v4.1.26 h1:GrpZw1gZttORinvzBdXPUXATeqlJjqUG/D87TKMnhjY=
 github.com/pierrec/lz4/v4 v4.1.26/go.mod h1:EoQMVJgeeEOMsCqCzqFm2O0cJvljX2nGZjcRIPL34O4=
 github.com/quic-go/go-ossfuzz-seeds v0.1.0 h1:APacT+iIaNF6fd8AGEiN3bT/Jtkd2jz4v4TzM7MFjy0=

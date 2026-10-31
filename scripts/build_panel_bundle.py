@@ -15,7 +15,7 @@ import struct
 import tarfile
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION="0.10.1"
+VERSION="0.14.1"
 
 def verify_version():
     for path, pattern in [
@@ -60,13 +60,13 @@ def main():
         subprocess.run(["go","build","-mod=readonly","-trimpath","-buildvcs=false","-ldflags=-s -w","-o",str(binary/name),package],cwd=ROOT,env=env,check=True)
         verify_binary(binary/name, args.arch)
     (bundle/"ARCH").write_text(args.arch+"\n", encoding="ascii")
-    for name in ["panel-install.sh","panel-security.sh","LICENSE","NOTICE","docs/PANEL.fa.md","docs/PANEL.en.md","docs/LOCAL-COTTEN.fa.md","docs/DOMAINS.fa.md","docs/SUBSCRIPTIONS.md","docs/TELEGRAM.md","docs/MASTERDNS.md","docs/MULTI-ENGINE.md","docs/MULTI-ENGINE-VALIDATION.md","docs/UPSTREAM-MERGE-VALIDATION.md","docs/PANEL-DESIGN.md","docs/PANEL-TUNING-2026-10-17.fa.md","docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md"]:
+    for name in ["panel-install.sh","panel-security.sh","panel-menu.sh","LICENSE","NOTICE","docs/EGRESS.fa.md","docs/EGRESS.en.md","docs/SERVER-MENU.fa.md","docs/SERVER-MENU.en.md","docs/PANEL.fa.md","docs/PANEL.en.md","docs/LOCAL-COTTEN.fa.md","docs/DOMAINS.fa.md","docs/SUBSCRIPTIONS.md","docs/TELEGRAM.md","docs/MASTERDNS.md","docs/MULTI-ENGINE.md","docs/MULTI-ENGINE-VALIDATION.md","docs/UPSTREAM-MERGE-VALIDATION.md","docs/PANEL-DESIGN.md","docs/PANEL-TUNING-2026-10-17.fa.md","docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md"]:
         target=bundle/name;target.parent.mkdir(parents=True,exist_ok=True)
         target.write_bytes((ROOT/name).read_text(encoding="utf8").replace("\r\n","\n").encode("utf8"))
     (bundle/"lib").mkdir(exist_ok=True)
     (bundle/"lib/panel-installer.sh").write_bytes((ROOT/"lib/panel-installer.sh").read_text(encoding="utf8").replace("\r\n","\n").encode("utf8"))
     (bundle/"lib/standalone-install.sh").write_bytes((ROOT/"install.sh").read_text(encoding="utf8").replace("\r\n","\n").encode("utf8"))
-    for name in ["ANTIFLOOD.fa.md", "COTTENMAX-PANEL-VALIDATION.md", "PANEL-0.5.0-VALIDATION.md", f"RELEASE-panel-{VERSION}.md", "COTTEN-TCP-RELIABILITY-2026-10-21.md"]:
+    for name in ["ANTIFLOOD.fa.md", "COTTENMAX-PANEL-VALIDATION.md", "PANEL-0.5.0-VALIDATION.md", f"RELEASE-panel-{VERSION}.md", "COTTEN-TCP-RELIABILITY-2026-10-21.md", "telegram-emergency-management.fa.md", "telegram-management-audit.md", "DIAGNOSTICS-ASSISTANT.fa.md"]:
         (bundle/"docs"/name).write_bytes((ROOT/"docs"/name).read_text(encoding="utf8").replace("\r\n","\n").encode("utf8"))
     shutil.copytree(ROOT/"patches",bundle/"patches",dirs_exist_ok=True)
     licenses=bundle/"licenses";licenses.mkdir(exist_ok=True)
@@ -87,7 +87,7 @@ def main():
         shutil.copyfile(cotten/source,licenses/label)
     cotten_revision=run("git","-C",str(cotten),"rev-parse","HEAD") if (cotten/".git").exists() else run("go","list","-m","-f","{{.Replace.Version}}","cottendns-go")
     patch_manifest=json.loads((ROOT/"patches/cotten-engine.json").read_text())
-    (bundle/"SOURCE-VERSIONS.txt").write_text(f"WhiteDNS Server Management: {VERSION}\nPanel source commit: {run('git','rev-parse','HEAD')}\nLantern Soar: v0.2.3\nCottenDNS source revision: {cotten_revision}\nCottenDNS patch SHA256: {patch_manifest['patch_sha256']}\nMasterDNS source revision: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['base_commit']}\nMasterDNS patch SHA256: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['patch_sha256']}\nStormDNS source revision: {json.loads((ROOT/'third_party/StormDNS/UPSTREAM.json').read_text())['commit']}\nToolchain: {run('go','version')}\nTarget: linux/{args.arch}; CGO_ENABLED=0\n\n{run('go','list','-m','all')}\n",encoding="ascii")
+    (bundle/"SOURCE-VERSIONS.txt").write_text(f"WhiteDNS Server Management: {VERSION}\nPanel source commit: {run('git','rev-parse','HEAD')}\nLantern Soar: v0.2.4\nCottenDNS source revision: {cotten_revision}\nCottenDNS patch SHA256: {patch_manifest['patch_sha256']}\nMasterDNS source revision: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['base_commit']}\nMasterDNS patch SHA256: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['patch_sha256']}\nStormDNS source revision: {json.loads((ROOT/'third_party/StormDNS/UPSTREAM.json').read_text())['commit']}\nToolchain: {run('go','version')}\nTarget: linux/{args.arch}; CGO_ENABLED=0\n\n{run('go','list','-m','all')}\n",encoding="ascii")
     sums="".join(f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(bundle).as_posix()}\n" for f in sorted(bundle.rglob("*")) if f.is_file() and f.name!="SHA256SUMS")
     (bundle/"SHA256SUMS").write_bytes(sums.encode("ascii"))
     archive=args.output/(bundle.name+".tar.gz")

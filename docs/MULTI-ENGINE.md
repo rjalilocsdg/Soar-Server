@@ -79,8 +79,8 @@ To install the custom Linux amd64 bundle on a supported server, upload the
 archive and run these commands in an interactive SSH terminal:
 
 ```sh
-tar -xzf soar-panel-0.10.1-linux-amd64.tar.gz
-cd soar-panel-0.10.1-linux-amd64
+tar -xzf soar-panel-0.14.1-linux-amd64.tar.gz
+cd soar-panel-0.14.1-linux-amd64
 sudo bash panel-install.sh
 ```
 

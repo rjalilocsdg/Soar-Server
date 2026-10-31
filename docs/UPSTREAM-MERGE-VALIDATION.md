@@ -44,3 +44,21 @@ The publication gate is the `Verify management panel` workflow on both native
 Linux architectures, including the full Go/race suite, engine suites, installer
 checks, offline bundle verification and both browser acceptance suites. Release
 assets are downloaded directly from that successful workflow run.
+
+## 0.14.1 update
+
+Fork base: `cef57d5` (0.10.1). Upstream: `1079be8` (0.14.0).
+Soar is updated to v0.2.4. MasterDnsVPN is updated to the exact
+`5f83ee9a1690a968f9edf495d3a7e00a2043b0bd` release with a regenerated
+embedding patch and complete source-file manifest. The upstream response
+synchronization and terminal stream cleanup fixes are preserved. StormDNS
+remains at its previous pinned source. Cotten Normal/Max remains unchanged.
+
+StormDNS participates in per-engine proxy settings, DNS routing, fail-closed
+proxy enforcement, redacted secrets, accounting and outbound report filters.
+Additional tests exercise its proxy isolation, payload counts and blocked
+private destinations. The existing beta3 fixture verifies unchanged domains,
+keys, links, subscriptions and account data through this upgrade.
+
+Publication requires the native Linux amd64/arm64 workflow, including full
+Go/race/engine/installer suites and both browser acceptance suites.

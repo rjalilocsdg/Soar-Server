@@ -3,7 +3,7 @@
 MasterDnsVPN is developed by MasterkinG32 / Amin Mahmoudi and licensed under MIT:
 https://github.com/masterking32/MasterDnsVPN
 
-The original protocol is pinned at `acbf1c61f90786f41b975d2e2f616afbce292b29`.
+The original protocol is pinned at `5f83ee9a1690a968f9edf495d3a7e00a2043b0bd`.
 `patches/masterdns-engine.json` records the embedding patch digest and the complete source-file manifest. Build preparation rejects different source files, additional build inputs and modified patches. The release includes the original engine license.
 
 ## Accounts and routing
