@@ -459,6 +459,9 @@ func buildAssistantProposal(before Settings, patch map[string]json.RawMessage, r
 }
 
 func normalizedAssistantSettings(v Settings) Settings {
+	if v.AccountLabelLength == 0 {
+		v.AccountLabelLength = DefaultAccountLabelLength
+	}
 	p := v.profileSettings()
 	v.SoarSettings = &p
 	f := v.antiFloodPolicy()

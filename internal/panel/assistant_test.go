@@ -320,3 +320,35 @@ func TestAssistantProposalExpiryDismissalAndUndoConflict(t *testing.T) {
 		t.Fatal("undo overwrote concurrent changes")
 	}
 }
+
+func TestAssistantSettingsShortLabelDefaultsAndConcurrentChanges(t *testing.T) {
+	for _, length := range []int{DefaultAccountLabelLength, 6} {
+		t.Run(fmt.Sprint(length), func(t *testing.T) {
+			s := testStore(t)
+			before, _ := s.Settings()
+			if length != DefaultAccountLabelLength {
+				before.AccountLabelLength = length
+				if err := s.SaveSettings(before); err != nil {
+					t.Fatal(err)
+				}
+			}
+			next := before
+			next.ServerStreamLimit = 77
+			if err := s.saveAssistantSettings(before, next, "assistant.settings_applied"); err != nil {
+				t.Fatal(err)
+			}
+			got, _ := s.Settings()
+			if got.AccountLabelLength != length || got.ServerStreamLimit != 77 {
+				t.Fatal("settings approval lost account-label preference")
+			}
+			changed := got
+			changed.AccountLabelLength = length + 1
+			if err := s.SaveSettings(changed); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.saveAssistantSettings(got, next, "assistant.settings_applied"); !errors.Is(err, ErrConflict) {
+				t.Fatal("stale approval overwrote newer account-label preference", err)
+			}
+		})
+	}
+}
