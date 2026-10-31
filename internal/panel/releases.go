@@ -18,7 +18,7 @@ const ReleaseRepository = "rjalilocsdg/Soar-Server"
 
 const ProductName = "WhiteDNS Server Management"
 
-var Version = "0.14.1"
+var Version = "0.14.2"
 var panelVersionPattern = regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)(?:-beta(\d+))?$`)
 
 func ValidVersion(v string) bool { return panelVersionPattern.MatchString(v) && len(v) < 48 }
@@ -139,9 +139,16 @@ func validatePanelReleaseArch(r PanelRelease, v, arch string) error {
 	}
 	return nil
 }
-func LatestPanelRelease(ctx context.Context) (PanelRelease, error) {
+func ListPanelReleases(ctx context.Context) ([]PanelRelease, error) {
 	var releases []PanelRelease
 	if e := getReleaseJSON(ctx, "releases?per_page=50", &releases); e != nil {
+		return nil, e
+	}
+	return releases, nil
+}
+func LatestPanelRelease(ctx context.Context) (PanelRelease, error) {
+	releases, e := ListPanelReleases(ctx)
+	if e != nil {
 		return PanelRelease{}, e
 	}
 	return selectPanelRelease(releases, Version)

@@ -5,6 +5,7 @@ go 1.26.0
 replace stormdns-go => ./third_party/StormDNS
 
 require (
+	soar-v023 v0.0.0
  stormdns-go v0.0.0
 	cottendns-go v0.0.0
 	github.com/getlantern/soar v0.2.4
@@ -33,3 +34,5 @@ require (
 	golang.org/x/text v0.40.0 // indirect
 	masterdnsvpn-go v0.0.0
 )
+
+replace soar-v023 => ./third_party/SoarV023

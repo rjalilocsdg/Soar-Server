@@ -90,6 +90,11 @@ func TestUnmodifiedClientHTTPSAndIsolation(t *testing.T) {
 	s := testStore(t)
 	a := account(t, s, 0)
 	b := account(t, s, 0)
+	legacyVersion := LegacySoarVersion
+	legacyAccount, legacyErr := s.Create(ClientInput{Name: "Legacy Soar HTTPS", Enabled: true, SoarVersion: &legacyVersion})
+	if legacyErr != nil {
+		t.Fatal(legacyErr)
+	}
 	probe, err := s.CreateInstallProbe()
 	if err != nil {
 		t.Fatal(err)
@@ -101,7 +106,7 @@ func TestUnmodifiedClientHTTPSAndIsolation(t *testing.T) {
 	})
 	roots := x509.NewCertPool()
 	roots.AddCert(origin.Certificate())
-	for _, c := range []Client{a, b, probe} {
+	for _, c := range []Client{a, b, probe, legacyAccount} {
 		client := nativeClient(t, m, c)
 		tr := &http.Transport{DialContext: client.DialContext, TLSClientConfig: &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}, DisableKeepAlives: true}
 		hc := &http.Client{Transport: tr, Timeout: 10 * time.Second}

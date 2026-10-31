@@ -1,5 +1,5 @@
 const path=require('node:path');
-module.exports=async function testMaintenance({page,url,out,assert}){
+module.exports=async function testMaintenance({page,url,out,assert,password}){
  await page.locator('nav a[data-page=backup]').click();await page.locator('#page-backup').waitFor({state:'visible'});
  const response=await page.request.get(url+'/api/backup');assert.equal(response.status(),200);const backup=await response.body();
  await page.locator('#restore-file').setInputFiles({name:'invalid.db',mimeType:'application/octet-stream',buffer:Buffer.from('invalid panel backup')});await page.locator('#restore-inspect').click();await page.locator('#restore-feedback[data-kind=error]').waitFor();assert.equal(await page.locator('#restore-preview').isVisible(),false);
@@ -7,6 +7,16 @@ module.exports=async function testMaintenance({page,url,out,assert}){
  await page.screenshot({path:path.join(out,'backup-restore-1440.png'),fullPage:true,animations:'disabled'});
  await page.route('**/api/updates/check',r=>r.fulfill({json:{current:'0.3.0',latest:'0.3.1',available:true,release_url:'https://github.com/WhiteDNS/Soar-Server/releases/tag/panel-v0.3.1'}}));
  await page.locator('nav a[data-page=updates]').click();await page.locator('#update-check').click();await page.locator('#update-preview').waitFor({state:'visible'});assert.equal(await page.locator('#update-latest').textContent(),'0.3.1');await page.screenshot({path:path.join(out,'updates-1440.png'),fullPage:true,animations:'disabled'});await page.unroute('**/api/updates/check');
+ await page.route('**/api/maintenance',r=>r.fulfill({json:{available:true,version:'0.14.2',job:{state:'idle'}}}));
+ await page.route('**/api/updates/downgrades',r=>r.fulfill({json:{current:'0.14.2',versions:[{version:'0.14.1',compatible:true,release_url:'https://github.com/rjalilocsdg/Soar-Server/releases/tag/panel-v0.14.1'},{version:'0.10.1',compatible:false,reason:'older panel cannot preserve configured proxy routes; choose 0.14.1 or later'}]}}));
+ await page.evaluate(()=>location.hash='dashboard');await page.locator('#page-dashboard').waitFor({state:'visible'});await page.evaluate(()=>location.hash='updates');await page.locator('#page-updates').waitFor({state:'visible'});
+ await page.locator('#downgrade-check').click();await page.locator('#downgrade-preview').waitFor({state:'visible'});
+ assert.equal(await page.locator('#downgrade-version').inputValue(),'0.14.1');assert.equal(await page.locator('#downgrade-version option[value="0.10.1"]').isDisabled(),true);
+ assert.equal(await page.locator('#downgrade-install').isDisabled(),true);await page.locator('#downgrade-confirm').check();await page.waitForFunction(()=>!document.getElementById('downgrade-install').disabled);
+ let requested;await page.route('**/api/updates/downgrade',r=>{requested=r.request().postDataJSON();return r.fulfill({status:403,json:{error:'current administrator password is incorrect'}});});
+ await page.locator('#downgrade-password').fill('wrong');await page.locator('#downgrade-install').click();await page.locator('#downgrade-feedback[data-kind=error]').waitFor();assert.deepEqual(requested,{version:'0.14.1',password:'wrong',confirm:true});assert.equal(await page.locator('#downgrade-password').inputValue(),'');
+ await page.screenshot({path:path.join(out,'downgrade-1440.png'),fullPage:true});
+ await page.unroute('**/api/updates/downgrade');await page.unroute('**/api/updates/downgrades');await page.unroute('**/api/maintenance');
  await page.locator('nav a[data-page=security]').click();await page.locator('#access-current-url').filter({visible:true}).waitFor();await page.waitForFunction(()=>document.getElementById('access-domain').required);
  await page.locator('#access-https').uncheck();await page.locator('#access-password').fill('wrong');await page.locator('#access-form button[type=submit]').click();await page.locator('#access-feedback[data-kind=error]').waitFor();assert.equal(await page.locator('#access-preview').isVisible(),false);
  await page.screenshot({path:path.join(out,'access-1440.png'),fullPage:true,animations:'disabled'});await page.locator('#access-password').fill('');

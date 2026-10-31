@@ -169,13 +169,13 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(job)
 }
 func (s *Service) Begin(request panel.MaintenanceRequest) (panel.MaintenanceJob, error) {
-	if request.Action != "restore" && request.Action != "update" && request.Action != "restart" {
+	if request.Action != "restore" && request.Action != "update" && request.Action != "restart" && request.Action != "downgrade" {
 		return panel.MaintenanceJob{}, errors.New("unsupported maintenance operation")
 	}
 	if request.Action == "restart" && (request.Version != "" || len(request.Backup) != 0 || request.SHA256 != "" || request.ExpectedZone != "") {
 		return panel.MaintenanceJob{}, errors.New("invalid panel restart")
 	}
-	if request.Action == "update" && (!panel.ValidVersion(request.Version) || len(request.Backup) != 0) {
+	if (request.Action == "update" || request.Action == "downgrade") && (!panel.ValidVersion(request.Version) || len(request.Backup) != 0) {
 		return panel.MaintenanceJob{}, errors.New("invalid panel update")
 	}
 	if request.Action == "restore" && (len(request.Backup) < 8192 || len(request.Backup) > panel.MaxBackupBytes || len(request.SHA256) != 64) {
@@ -278,7 +278,17 @@ func (s *Service) perform(request panel.MaintenanceRequest, job panel.Maintenanc
 		}
 	} else {
 		out, e := exec.CommandContext(ctx, s.Binary, "version").Output()
-		if e != nil || !panel.NewerVersion(request.Version, strings.TrimSpace(string(out))) {
+		if e != nil {
+			fail(errors.New("cannot identify installed panel version"))
+			return
+		}
+		installed := strings.TrimSpace(string(out))
+		if request.Action == "downgrade" {
+			if e = panel.ValidatePanelDowngrade(request.Version, installed); e != nil {
+				fail(e)
+				return
+			}
+		} else if !panel.NewerVersion(request.Version, installed) {
 			fail(errors.New("update must be newer than the installed panel"))
 			return
 		}
@@ -325,6 +335,17 @@ func (s *Service) perform(request panel.MaintenanceRequest, job panel.Maintenanc
 			return
 		}
 	}
+	if request.Action == "downgrade" {
+		snapshot := filepath.Join(backup, "panel.db")
+		if e := panel.ValidateDowngradeSnapshot(snapshot, request.Version); e != nil {
+			fail(e)
+			return
+		}
+		if _, e := InspectChild(ctx, filepath.Join(work, "soar-panel"), snapshot); e != nil {
+			fail(errors.New("selected older panel cannot read the current account database"))
+			return
+		}
+	}
 	job.Backup = backup
 	job.Message = "Activating validated maintenance candidate"
 	s.Save(job)
@@ -347,19 +368,25 @@ func (s *Service) perform(request panel.MaintenanceRequest, job panel.Maintenanc
 			return
 		}
 	} else {
-		for _, pair := range [][2]string{{"soar-panel", s.Binary}, {"soar-panel-ops", s.OpsBinary}} {
+		binaries := [][2]string{{"soar-panel", s.Binary}}
+		// Keep current maintenance tools on a panel downgrade. Older helpers may not
+		// understand the installed systemd flags or the newer maintenance protocol.
+		if request.Action == "update" {
+			binaries = append(binaries, [2]string{"soar-panel-ops", s.OpsBinary})
+		}
+		for _, pair := range binaries {
 			if e := copyAtomic(filepath.Join(work, pair[0]), pair[1], 0755, -1, -1); e != nil {
 				fail(e)
 				return
 			}
 		}
-		if s.SecurityScript != "" {
+		if request.Action == "update" && s.SecurityScript != "" {
 			if e := copyAtomic(filepath.Join(work, "soar-panel-security"), s.SecurityScript, 0755, -1, -1); e != nil {
 				fail(e)
 				return
 			}
 		}
-		if s.MenuScript != "" {
+		if request.Action == "update" && s.MenuScript != "" {
 			if e := copyAtomic(filepath.Join(work, "soar-panel-menu"), s.MenuScript, 0755, -1, -1); e != nil {
 				fail(e)
 				return
@@ -590,7 +617,7 @@ func extractBinariesArch(archive, destination, version, arch string) error {
 			found[name] = true
 		}
 	}
-	if len(found) != 4 {
+	if !found["soar-panel"] || !found["soar-panel-ops"] || !found["soar-panel-security"] || (!found["soar-panel-menu"] && version != "0.10.1") {
 		return errors.New("release is missing maintenance binaries")
 	}
 	return nil

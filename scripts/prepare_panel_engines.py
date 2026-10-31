@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -16,7 +17,13 @@ def main():
     parser.add_argument("--workspace", type=Path, default=ROOT / ".engine-source/patched.go.work")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    sources = [ROOT, ROOT / ".engine-source/CottenDNS", ROOT / ".engine-source/MasterDnsVPN", ROOT / "third_party/StormDNS"]
+    legacy = json.loads((ROOT / "patches/soar-v023-engine.json").read_text())
+    source = ROOT / legacy["directory"]
+    actual = {p.relative_to(source).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+              for p in source.rglob("*") if p.is_file()}
+    if actual != legacy["files_sha256"]:
+        raise RuntimeError("Legacy Soar source differs from its pinned manifest")
+    sources = [ROOT, ROOT / ".engine-source/CottenDNS", ROOT / ".engine-source/MasterDnsVPN", ROOT / "third_party/StormDNS", source]
     cotten = prepare_cotten_engine.prepare(sources[1], args.check)
     master = prepare_masterdns_engine.prepare(sources[2], args.check)
     if not args.check:

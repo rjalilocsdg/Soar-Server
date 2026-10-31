@@ -81,12 +81,28 @@ jobs:
         run: go test -race ./internal/panel -run 'TestMasterDNS|TestSettingsSaveRestarts' -count=3 -timeout 180s
       - name: Verify pinned engine dependencies and cleanup
         run: |
+          (cd third_party/SoarV023 && go test ./... -count=1 -timeout 240s)
           (cd .engine-source/CottenDNS && go test ./... -count=1 -timeout 240s && go vet ./...)
           (cd .engine-source/MasterDnsVPN && go test ./... -count=1 -timeout 240s && go test ./internal/udpserver -run '^TestCleanupClosedSessionClosesStreamsAndClearsQueues$|^TestFinalizedStreamRejectsLatePackets$' -count=1000 -timeout 90s && go test -race ./internal/udpserver -run 'TestEmbedded|TestCleanupClosedSessionClosesStreamsAndClearsQueues|TestFinalizedStreamRejectsLatePackets' -count=10 -timeout 90s && go vet ./...)
+      - name: Check database compatibility with published older panels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/older-panels"
+          for version in 0.10.1 0.14.1; do
+            destination="$RUNNER_TEMP/older-panels/$version"
+            mkdir -p "$destination"
+            archive="soar-panel-$version-linux-${{ matrix.arch }}.tar.gz"
+            gh release download "panel-v$version" --repo rjalilocsdg/Soar-Server --pattern "$archive" --pattern "$archive.sha256" --dir "$destination"
+            (cd "$destination" && sha256sum -c "$archive.sha256")
+            tar -xzf "$destination/$archive" -C "$destination" "soar-panel-$version-linux-${{ matrix.arch }}/bin/linux-${{ matrix.arch }}/soar-panel"
+          done
+          echo "PANEL_OLDER_PANEL=$RUNNER_TEMP/older-panels/0.10.1/soar-panel-0.10.1-linux-${{ matrix.arch }}/bin/linux-${{ matrix.arch }}/soar-panel" >> "$GITHUB_ENV"
+          echo "PANEL_PREVIOUS_PANEL=$RUNNER_TEMP/older-panels/0.14.1/soar-panel-0.14.1-linux-${{ matrix.arch }}/bin/linux-${{ matrix.arch }}/soar-panel" >> "$GITHUB_ENV"
       - name: Verify panel modules and behavior
         run: |
           go mod verify
-          go test ./... -count=1 -timeout 180s
+          go test ./... -count=1 -timeout 300s
           # The expanded Telegram restore/model-discovery suite adds bcrypt-backed
           # admin fixtures; slower runners need room to finish every race check.
           go test -race ./internal/panel ./internal/panelops -count=1 -timeout 1800s

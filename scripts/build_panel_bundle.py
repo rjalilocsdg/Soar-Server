@@ -15,7 +15,7 @@ import struct
 import tarfile
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION="0.14.1"
+VERSION="0.14.2"
 
 def verify_version():
     for path, pattern in [
@@ -71,13 +71,14 @@ def main():
     shutil.copytree(ROOT/"patches",bundle/"patches",dirs_exist_ok=True)
     licenses=bundle/"licenses";licenses.mkdir(exist_ok=True)
     shutil.copyfile(ROOT/"internal/panel/web/fonts/OFL.txt",licenses/"Vazirmatn-OFL.txt")
-    for mod,label in [("stormdns-go","StormDNS"),("masterdnsvpn-go","MasterDNS"),("cottendns-go","CottenDNS"),("github.com/quic-go/quic-go","quic-go"),("github.com/quic-go/qpack","qpack"),("github.com/BurntSushi/toml","BurntSushi-toml"),("github.com/klauspost/compress","compress"),("github.com/klauspost/cpuid/v2","cpuid"),("github.com/klauspost/reedsolomon","reedsolomon"),("github.com/pierrec/lz4/v4","lz4"),("github.com/getlantern/soar","Soar"),("go.etcd.io/bbolt","bbolt"),("github.com/skip2/go-qrcode","go-qrcode"),("golang.org/x/crypto","x-crypto"),("golang.org/x/sys","x-sys"),("golang.org/x/net","x-net"),("golang.org/x/text","x-text")]:
+    for mod,label in [("soar-v023","Soar-v023"),("stormdns-go","StormDNS"),("masterdnsvpn-go","MasterDNS"),("cottendns-go","CottenDNS"),("github.com/quic-go/quic-go","quic-go"),("github.com/quic-go/qpack","qpack"),("github.com/BurntSushi/toml","BurntSushi-toml"),("github.com/klauspost/compress","compress"),("github.com/klauspost/cpuid/v2","cpuid"),("github.com/klauspost/reedsolomon","reedsolomon"),("github.com/pierrec/lz4/v4","lz4"),("github.com/getlantern/soar","Soar"),("go.etcd.io/bbolt","bbolt"),("github.com/skip2/go-qrcode","go-qrcode"),("golang.org/x/crypto","x-crypto"),("golang.org/x/sys","x-sys"),("golang.org/x/net","x-net"),("golang.org/x/text","x-text")]:
         module=Path(run("go","list","-m","-f","{{.Dir}}",mod))
         original=next((module/name for name in ("LICENSE","COPYING","LICENSE.txt","LICENSE.md") if (module/name).is_file()),None)
         if original is None:raise RuntimeError(f"Missing original license for {mod}")
         shutil.copyfile(original,licenses/(label+"-LICENSE.txt"))
     soar=Path(run("go","list","-m","-f","{{.Dir}}","github.com/getlantern/soar"))
     shutil.copyfile(soar/"data/THIRD_PARTY.md",licenses/"Soar-data-THIRD-PARTY.md")
+    shutil.copyfile(ROOT/"third_party/SoarV023/data/THIRD_PARTY.md",licenses/"Soar-v023-data-THIRD-PARTY.md")
     goroot=Path(run("go","env","GOROOT"))
     go_license=next((p for p in (goroot/"LICENSE",goroot.parent/"LICENSE") if p.is_file()),None)
     if go_license is None: raise RuntimeError("Missing original Go license")
@@ -87,7 +88,7 @@ def main():
         shutil.copyfile(cotten/source,licenses/label)
     cotten_revision=run("git","-C",str(cotten),"rev-parse","HEAD") if (cotten/".git").exists() else run("go","list","-m","-f","{{.Replace.Version}}","cottendns-go")
     patch_manifest=json.loads((ROOT/"patches/cotten-engine.json").read_text())
-    (bundle/"SOURCE-VERSIONS.txt").write_text(f"WhiteDNS Server Management: {VERSION}\nPanel source commit: {run('git','rev-parse','HEAD')}\nLantern Soar: v0.2.4\nCottenDNS source revision: {cotten_revision}\nCottenDNS patch SHA256: {patch_manifest['patch_sha256']}\nMasterDNS source revision: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['base_commit']}\nMasterDNS patch SHA256: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['patch_sha256']}\nStormDNS source revision: {json.loads((ROOT/'third_party/StormDNS/UPSTREAM.json').read_text())['commit']}\nToolchain: {run('go','version')}\nTarget: linux/{args.arch}; CGO_ENABLED=0\n\n{run('go','list','-m','all')}\n",encoding="ascii")
+    (bundle/"SOURCE-VERSIONS.txt").write_text(f"WhiteDNS Server Management: {VERSION}\nPanel source commit: {run('git','rev-parse','HEAD')}\nLantern Soar: v0.2.4 (default), v0.2.3 (per-account legacy)\nCottenDNS source revision: {cotten_revision}\nCottenDNS patch SHA256: {patch_manifest['patch_sha256']}\nMasterDNS source revision: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['base_commit']}\nMasterDNS patch SHA256: {json.loads((ROOT/'patches/masterdns-engine.json').read_text())['patch_sha256']}\nStormDNS source revision: {json.loads((ROOT/'third_party/StormDNS/UPSTREAM.json').read_text())['commit']}\nToolchain: {run('go','version')}\nTarget: linux/{args.arch}; CGO_ENABLED=0\n\n{run('go','list','-m','all')}\n",encoding="ascii")
     sums="".join(f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(bundle).as_posix()}\n" for f in sorted(bundle.rglob("*")) if f.is_file() and f.name!="SHA256SUMS")
     (bundle/"SHA256SUMS").write_bytes(sums.encode("ascii"))
     archive=args.output/(bundle.name+".tar.gz")

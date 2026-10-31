@@ -128,6 +128,9 @@ func (h *HTTP) maintenancePassword(w http.ResponseWriter, r *http.Request, passw
 }
 func (h *HTTP) maintenance(w http.ResponseWriter, r *http.Request, session loginSession) bool {
 	switch r.URL.Path {
+	case "/api/updates/downgrades", "/api/updates/downgrade":
+		h.panelDowngrade(w, r)
+		return true
 	case "/api/maintenance":
 		if r.Method != "GET" {
 			w.WriteHeader(405)

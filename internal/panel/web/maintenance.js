@@ -1,15 +1,15 @@
 'use strict';
 window.panelMaintenance=(()=>{
- let restoreToken='',updateVersion='',accessPlan='',accessConfig={},available=false,watching=false;
+ let restoreToken='',updateVersion='',downgradeVersions=[],accessPlan='',accessConfig={},available=false,watching=false;
  const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  const info=(id,text,error=false)=>{const el=$(id);el.textContent=message({message:text});el.dataset.kind=error?'error':'info';};
  const withFeedback=(button,id,fn)=>withButton(button,async()=>{try{return await fn();}catch(e){info(id,message(e),true);throw e;}});
  function pendingJob(value){try{if(value)sessionStorage.setItem('soar-maintenance-job',value);else sessionStorage.removeItem('soar-maintenance-job');}catch{}}
- function jobText(job){if(!job?.id)return panelText("هنوز عملیاتی انجام نشده است.");const kind=job.kind==='restore'?panelText("بازیابی"):panelText("به‌روزرسانی");const states={running:panelText("در حال انجام است؛ ممکن است ارتباط موقتاً قطع شود."),succeeded:panelText("با موفقیت انجام شد."),rolled_back:panelText("کامل نشد؛ نسخه و اطلاعات قبلی برگردانده شد."),failed:panelText("انجام نشد؛ جزئیات را بررسی کنید.")};return kind+' '+(states[job.state]||job.state)+(job.state==='failed'||job.state==='rolled_back'?' '+job.message:'');}
+ function jobText(job){if(!job?.id)return panelText("هنوز عملیاتی انجام نشده است.");const kind=job.kind==='downgrade'?panelText('بازگشت نسخه'):job.kind==='restore'?panelText("بازیابی"):panelText("به‌روزرسانی");const states={running:panelText("در حال انجام است؛ ممکن است ارتباط موقتاً قطع شود."),succeeded:panelText("با موفقیت انجام شد."),rolled_back:panelText("کامل نشد؛ نسخه و اطلاعات قبلی برگردانده شد."),failed:panelText("انجام نشد؛ جزئیات را بررسی کنید.")};return kind+' '+(states[job.state]||job.state)+(job.state==='failed'||job.state==='rolled_back'?' '+job.message:'');}
  function showJob(job){for(const el of document.querySelectorAll('[data-maintenance-state]')){el.textContent=jobText(job);el.dataset.kind=['failed','rolled_back'].includes(job?.state)?'error':'info';}}
  async function load(page){
   const ticket=navigationId,session=csrf;const state=await api('/maintenance');if(ticket!==navigationId||session!==csrf)return;available=state.available;$('update-current').textContent=state.version;showJob(state.job);
-  $('restore-apply').disabled=!available;$('update-install').disabled=!available||!updateVersion;
+  syncDowngrade();$('restore-apply').disabled=!available;$('update-install').disabled=!available||!updateVersion;
   if(!available&&page==='backup'){
    const detail=state.error&&!state.error.startsWith('maintenance service unavailable')?message({message:state.error}):'';
    info('restore-feedback',panelText("برای فعال‌شدن بازیابی، نصب‌کنندهٔ همین نسخه باید سرویس نگهداری را نصب کرده باشد. ")+detail,true);
@@ -51,6 +51,26 @@ window.panelMaintenance=(()=>{
  });
  $('update-install').onclick=e=>withFeedback(e.currentTarget,'update-feedback',async()=>{
   const password=$('update-password').value;try{if(!updateVersion)throw Error(panelText("ابتدا نسخهٔ جدید را بررسی کنید."));const job=await api('/updates/install','POST',{version:updateVersion,password});info('update-feedback',panelText("دریافت و بررسی بسته آغاز شد. تا پایان بررسی، سرویس فعلی کار می‌کند."));void watchJob(job);}finally{$('update-password').value='';}
+ });
+ function syncDowngrade(){
+  const selected=downgradeVersions.find(v=>v.version===$('downgrade-version').value);
+  $('downgrade-install').disabled=!available||!selected?.compatible||!$('downgrade-confirm').checked;
+  $('downgrade-release').href=selected?.release_url||'#';
+ }
+ $('downgrade-check').onclick=e=>withFeedback(e.currentTarget,'downgrade-feedback',async()=>{
+  $('downgrade-preview').hidden=true;$('downgrade-password').value='';$('downgrade-confirm').checked=false;
+  const result=await api('/updates/downgrades','POST',{});downgradeVersions=result.versions;
+  $('downgrade-version').replaceChildren(...downgradeVersions.map(v=>{const option=new Option(v.version+(v.compatible?'':' — '+message({message:v.reason})),v.version);option.disabled=!v.compatible;return option;}));
+  const first=downgradeVersions.find(v=>v.compatible);if(first)$('downgrade-version').value=first.version;
+  $('downgrade-preview').hidden=!downgradeVersions.length;syncDowngrade();panelUI.syncSelects();
+  info('downgrade-feedback',panelText(downgradeVersions.length?'نسخهٔ مقصد را انتخاب کنید.':'نسخهٔ قدیمی‌تر سازگاری پیدا نشد.'));
+ });
+ $('downgrade-version').onchange=()=>{$('downgrade-confirm').checked=false;syncDowngrade();};
+ $('downgrade-confirm').onchange=syncDowngrade;
+ $('downgrade-install').onclick=e=>withFeedback(e.currentTarget,'downgrade-feedback',async()=>{
+  try{const selected=downgradeVersions.find(v=>v.version===$('downgrade-version').value);if(!selected?.compatible||!$('downgrade-confirm').checked)throw Error(panelText('نسخهٔ مقصد را انتخاب کنید.'));
+   const job=await api('/updates/downgrade','POST',{version:selected.version,password:$('downgrade-password').value,confirm:true});void watchJob(job);
+  }finally{$('downgrade-password').value='';}
  });
  function syncDomain(){$('access-domain').required=$('access-https').checked;for(const id of ['access-domain','access-email','access-aliases','access-keep-old'])$(id).disabled=!$('access-https').checked;}
  const splitDomains=value=>value.split(/[,\s،]+/).filter(Boolean).map(v=>v.toLowerCase().replace(/\.$/,''));

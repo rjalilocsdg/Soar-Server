@@ -42,7 +42,7 @@ func (m *Manager) runAccount(rt *accountRuntime, seed []byte) {
 				m.diagnostics.soarStarts.Add(1)
 				m.diagnostics.soarRunning.Add(1)
 				m.logEvent("info", "soar", rt.client.ID, "engine_started", nil, 0)
-				err := soar.Serve(rt.ctx, pc, soar.ServerConfig{Zone: zone, PrivateKey: ed25519.NewKeyFromSeed(seed), Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				err := serveSoarVersion(rt.client.soarVersion(), rt.ctx, pc, soar.ServerConfig{Zone: zone, PrivateKey: ed25519.NewKeyFromSeed(seed), Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 					return m.dialForEngine(rt, ctx, network, address, upstreamSoar)
 				}, MaxSessions: rt.client.SoarSessionLimit, MaxTotalStreams: totalStreams, MaxStreams: sessionStreams, Logger: slog.New(engineDiagnosticHandler{&m.diagnostics})})
 				m.diagnostics.soarRunning.Add(-1)

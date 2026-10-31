@@ -34,21 +34,22 @@ type loginAttempt struct {
 	until time.Time
 }
 type HTTP struct {
-	store         *Store
-	manager       *Manager
-	trustProxy    bool
-	mu            sync.Mutex
-	authMu        sync.RWMutex // Serialize credential changes against login/session creation.
-	sessions      map[string]loginSession
-	attempts      map[string]loginAttempt
-	assets        http.Handler
-	metrics       hostSampler
-	ops           MaintenanceOps
-	preview       *restorePreview
-	inspectBackup func(context.Context, string) (BackupSummary, error)
-	access        *AccessController
-	telegram      *Telegram
-	assistant     *panelAssistant
+	store             *Store
+	manager           *Manager
+	trustProxy        bool
+	mu                sync.Mutex
+	authMu            sync.RWMutex // Serialize credential changes against login/session creation.
+	sessions          map[string]loginSession
+	attempts          map[string]loginAttempt
+	assets            http.Handler
+	metrics           hostSampler
+	ops               MaintenanceOps
+	preview           *restorePreview
+	inspectBackup     func(context.Context, string) (BackupSummary, error)
+	listPanelReleases func(context.Context) ([]PanelRelease, error)
+	access            *AccessController
+	telegram          *Telegram
+	assistant         *panelAssistant
 }
 
 func NewHTTP(s *Store, m *Manager, trustLoopbackProxy bool) *HTTP {

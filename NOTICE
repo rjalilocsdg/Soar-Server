@@ -61,3 +61,9 @@ Source: https://github.com/nullroute1970/StormDNS
 Its pinned revision and embedded API additions are recorded in
 third_party/StormDNS/UPSTREAM.json. Its original license text is included
 in licenses/StormDNS-LICENSE.txt.
+
+The panel also includes the independently namespaced Lantern Soar v0.2.3
+compatibility engine (Apache-2.0), with original license and dataset notices
+in licenses/Soar-v023-LICENSE.txt and Soar-v023-data-THIRD-PARTY.md.
+Its complete source hash manifest is patches/soar-v023-engine.json.
+The default panel Soar engine is v0.2.4.

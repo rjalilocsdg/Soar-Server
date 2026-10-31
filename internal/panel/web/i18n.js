@@ -2,6 +2,20 @@
 // Translation is applied to authored UI only. Account names, notes, URLs and input values are never translated.
 const panelI18n = (() => {
  const catalog = {
+"نسخهٔ قدیمی‌تر":"Older versions",
+"بازگشت به نسخهٔ قدیمی‌تر":"Downgrade panel",
+"نسخهٔ مقصد":"Target version",
+"نسخهٔ مقصد را انتخاب کنید.":"Choose the target version.",
+"نسخهٔ قدیمی‌تر سازگاری پیدا نشد.":"No compatible older releases found.",
+"بازگشت نسخه":"Downgrade",
+"بازگشت به نسخهٔ انتخابی را تأیید می‌کنم.":"I confirm downgrading to the selected version.",
+"نصب نسخهٔ انتخابی":"Install selected version",
+"پیش از تغییر نسخه، پشتیبان گرفته می‌شود. اتصال‌ها موقتاً قطع می‌شوند. اگر نسخهٔ انتخابی بالا نیاید، نسخه و اطلاعات قبلی برمی‌گردند.":"A backup is created before switching versions. Connections briefly disconnect. If the selected version fails to start, the previous version and data are restored.",
+
+ "نسخهٔ سرور Soar": "Soar server version",
+ "v0.2.4 — پیش‌فرض": "v0.2.4 — default",
+ "فقط نسخهٔ موتور سرور را تعیین می‌کند؛ نسخهٔ کلاینت داخل اپ تغییر نمی‌کند. تغییر این گزینه اتصال‌های همین حساب را راه‌اندازی مجدد می‌کند؛ لینک و کلید حفظ می‌شوند.": "Controls only the server engine; the app keeps its own client version. Changing this restarts this account's connections; its links and keys are preserved.",
+
  "روش رمزنگاری Cotten، StormDNS و MasterDNS": "Cotten, StormDNS and MasterDNS encryption",
  "AES-256-GCM پیشنهاد می‌شود. XOR رمزنگاری ضعیف است. پس از تغییر، اتصال‌های حساب بسته می‌شوند و باید ساب کلاینت را تازه کنید. این گزینه روی Soar اثری ندارد. در Cotten این گزینه برای حالت Normal است؛ حالت Max رمزنگاری مستقل خود را دارد.": "AES-256-GCM is recommended. XOR is weak encryption. Changing this closes account sessions; refresh the client subscription afterward. This setting does not affect Soar. For Cotten this applies to Normal mode; Max uses its own encryption.",
  "XOR — ضعیف": "XOR — weak",
