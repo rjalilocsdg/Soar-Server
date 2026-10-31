@@ -69,6 +69,7 @@ func TestBeta3UpgradePreservesAccountsProfilesAndSubscriptions(t *testing.T) {
 		}
 		// New fields resolve defaults in memory without migrating stored accounts.
 		original.MasterDNSSessionLimit = DefaultMasterDNSSessionLimit
+		original.SoarVersion = DefaultSoarVersion
 		if got != original {
 			t.Fatalf("upgrade changed beta3 account: got=%+v want=%+v", got, original)
 		}

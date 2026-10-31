@@ -1,8 +1,9 @@
-> Fork release **0.14.1** merges upstream through `1079be8` (panel 0.14.0),
+> Fork release **0.14.2** adds per-account Soar 0.2.3/0.2.4 selection and panel downgrades.
+> It includes upstream through `1079be8` (panel 0.14.0),
 > updates Soar to v0.2.4 and MasterDnsVPN to release `5f83ee9`, and preserves
 > StormDNS, Cotten Normal/Max, 3–26-character account labels and optional XOR.
 > Existing account links, keys and subscriptions remain valid.
-> [Release details](docs/RELEASE-panel-0.14.1.md) · [Four-engine guide](docs/MULTI-ENGINE.md).
+> [Release details](docs/RELEASE-panel-0.14.2.md) · [Four-engine guide](docs/MULTI-ENGINE.md).
 
 ![Soar Server and WhiteDNS management dashboard](docs/assets/soar-server-banner.png)
 
@@ -16,7 +17,7 @@
 
 [پراکسی خروجی، پورت‌های Upstream و گزارش ترافیک — فارسی](docs/EGRESS.fa.md) · [English](docs/EGRESS.en.md): راهنمای قدم‌به‌قدم هر چهار موتور، ورودی لوکال Xray/sing-box، فیلتر زمانی و دانلود CSV/JSON.
 
-پنل مدیریت سرور **WhiteDNS 0.14.1** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
+پنل مدیریت سرور **WhiteDNS 0.14.2** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
 
 **CottenDNS** نیز از [فورک سازگار WhiteDNS](https://github.com/WhiteDNS/CottenDns) و با حفظ نام و مجوز نویسندگان اصلی اضافه شده است.
 

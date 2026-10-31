@@ -12,7 +12,7 @@ const panelI18n = (() => {
 "نصب نسخهٔ انتخابی":"Install selected version",
 "پیش از تغییر نسخه، پشتیبان گرفته می‌شود. اتصال‌ها موقتاً قطع می‌شوند. اگر نسخهٔ انتخابی بالا نیاید، نسخه و اطلاعات قبلی برمی‌گردند.":"A backup is created before switching versions. Connections briefly disconnect. If the selected version fails to start, the previous version and data are restored.",
 
- "نسخهٔ سرور Soar": "Soar server version",
+ "نسخهٔ موتور Soar": "Soar server version",
  "v0.2.4 — پیش‌فرض": "v0.2.4 — default",
  "فقط نسخهٔ موتور سرور را تعیین می‌کند؛ نسخهٔ کلاینت داخل اپ تغییر نمی‌کند. تغییر این گزینه اتصال‌های همین حساب را راه‌اندازی مجدد می‌کند؛ لینک و کلید حفظ می‌شوند.": "Controls only the server engine; the app keeps its own client version. Changing this restarts this account's connections; its links and keys are preserved.",
 
