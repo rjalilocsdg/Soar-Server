@@ -5,8 +5,6 @@ go 1.26.0
 replace stormdns-go => ./third_party/StormDNS
 
 require (
-	soar-v023 v0.0.0
- stormdns-go v0.0.0
 	cottendns-go v0.0.0
 	github.com/getlantern/soar v0.2.4
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -14,6 +12,8 @@ require (
 	golang.org/x/crypto v0.54.0
 	golang.org/x/net v0.56.0
 	golang.org/x/sys v0.47.0
+	soar-v023 v0.0.0
+	stormdns-go v0.0.0
 )
 
 require (
@@ -23,7 +23,7 @@ require (
 
 replace masterdnsvpn-go => github.com/masterking32/MasterDnsVPN v0.0.0-20261026100431-5f83ee9a1690
 
-replace cottendns-go => github.com/WhiteDNS/CottenDNS v0.0.0-20261024182838-7db7b73658c7
+replace cottendns-go => github.com/WhiteDNS/CottenDNS v0.0.0-20261104173402-5e2a9045e0fb
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect

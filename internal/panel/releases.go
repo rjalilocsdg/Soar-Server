@@ -2,6 +2,8 @@ package panel
 
 import (
 	"context"
+	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,7 +20,21 @@ const ReleaseRepository = "rjalilocsdg/Soar-Server"
 
 const ProductName = "WhiteDNS Server Management"
 
-var Version = "0.14.2"
+var Version = "0.14.4"
+
+// Public keys panels trust; see docs/RELEASING.md. The offline key stays trusted so
+// a release signed with it can replace the release workflow's key if that one leaks.
+var releaseSigningKeys = []string{
+	"ElvwGt473QPcwNO2hrfqBlZhUAYBotalEvmxWzW38JU=", // offline
+	"xie2iOZ8hPZFMMN35SZv7VugbzjhvHKMwdOmCI+BnJ0=", // release workflow
+}
+
+// Offline and workflow signatures use separate files to support key rotation.
+const (
+	OfflineSignatureSuffix  = ".sha256.sig"
+	WorkflowSignatureSuffix = ".sha256.ci.sig"
+)
+
 var panelVersionPattern = regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)(?:-beta(\d+))?$`)
 
 func ValidVersion(v string) bool { return panelVersionPattern.MatchString(v) && len(v) < 48 }
@@ -128,16 +144,28 @@ func validatePanelReleaseArch(r PanelRelease, v, arch string) error {
 	}
 	found := map[string]bool{}
 	for _, a := range r.Assets {
-		for _, name := range []string{archive, archive + ".sha256"} {
+		for _, name := range []string{archive, archive + ".sha256", archive + OfflineSignatureSuffix, archive + WorkflowSignatureSuffix} {
 			if a.Name == name && a.URL == "https://github.com/rjalilocsdg/Soar-Server/releases/download/"+r.Tag+"/"+name && a.Size > 0 && a.Size <= 96<<20 {
 				found[name] = true
 			}
 		}
 	}
-	if len(found) != 2 {
+	if !found[archive] || !found[archive+".sha256"] || !found[archive+OfflineSignatureSuffix] && !found[archive+WorkflowSignatureSuffix] {
 		return errors.New("official panel bundle is not available")
 	}
 	return nil
+}
+
+// VerifyReleaseSignature proves a trusted key signed the checksum file, which names
+// the archive and its version.
+func VerifyReleaseSignature(sums, signature []byte) error {
+	for _, encoded := range releaseSigningKeys {
+		key, e := base64.StdEncoding.DecodeString(encoded)
+		if e == nil && len(key) == ed25519.PublicKeySize && ed25519.Verify(key, sums, signature) {
+			return nil
+		}
+	}
+	return errors.New("release signature verification failed")
 }
 func ListPanelReleases(ctx context.Context) ([]PanelRelease, error) {
 	var releases []PanelRelease

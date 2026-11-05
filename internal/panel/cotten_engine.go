@@ -155,6 +155,7 @@ func (m *Manager) startCottenWorkers() {
 				case <-m.ctx.Done():
 					return
 				case job := <-m.cottenJobs:
+					job.rt.dnsQueued.Add(-1)
 					var response []byte
 					if job.engine == "stormdns" || job.engine == "masterdns" {
 						if engine, err := m.additionalFor(job.rt, job.engine); err == nil {
@@ -176,6 +177,22 @@ func (m *Manager) startCottenWorkers() {
 			}
 		}()
 	}
+}
+
+// One noisy account must not fill the queue every Cotten and MasterDNS account shares.
+// A large datagram from the native client is a burst of far more than 32 queries.
+const maxAccountDNSJobs = 256
+
+func (m *Manager) queueEngineDNS(job cottenJob) bool {
+	if job.rt.dnsQueued.Add(1) <= maxAccountDNSJobs {
+		select {
+		case m.cottenJobs <- job:
+			return true
+		default:
+		}
+	}
+	job.rt.dnsQueued.Add(-1)
+	return false
 }
 
 // All engines live beneath the existing delegation. Engine prefixes route
@@ -230,10 +247,7 @@ func (m *Manager) routeDNS(query []byte, remote net.Addr, tcp bool, reply func([
 	if rt != nil {
 		if selected != "soar" && rt.client.hasEngine(selected) {
 			job := cottenJob{engine: selected, rt: rt, query: append([]byte(nil), query...), reply: reply, tcp: tcp}
-			select {
-			case m.cottenJobs <- job:
-				return
-			default:
+			if !m.queueEngineDNS(job) {
 				if selected == "cotten" {
 					m.diagnostics.cottenQueueDrops.Add(1)
 				} else if selected == "masterdns" {
@@ -242,7 +256,9 @@ func (m *Manager) routeDNS(query []byte, remote net.Addr, tcp bool, reply func([
 					m.diagnostics.forAdditional(selected).queueDrops.Add(1)
 				}
 				m.logEvent("warn", selected, rt.client.ID, "dns_queue_full", nil, 0)
+				reply(nil)
 			}
+			return
 		} else if selected == "soar" && !tcp && rt.client.hasEngine("soar") {
 			q := packet{append([]byte(nil), query...), remote}
 			select {
@@ -378,6 +394,10 @@ func (m *Manager) exchangeEngineDNS(rt *accountRuntime, parent context.Context, 
 	ctx, cancel := context.WithTimeout(parent, 6*time.Second)
 	defer cancel()
 	candidates := rt.orderedResolvers(resolvers, time.Now())
+	network := "udp"
+	if route.Mode == "http" || route.Mode == "https" {
+		network = "tcp"
+	}
 	for i, candidate := range candidates {
 		endpoint := candidate.endpoint
 		deadline, _ := ctx.Deadline()
@@ -390,11 +410,12 @@ func (m *Manager) exchangeEngineDNS(rt *accountRuntime, parent context.Context, 
 		}
 		attempt, stop := context.WithTimeout(ctx, budget)
 		started := time.Now()
-		network := "udp"
-		if route.Mode == "http" || route.Mode == "https" {
-			network = "tcp"
-		}
 		response, err := m.exchangeDNSForEngine(rt, attempt, network, endpoint, query, engine)
+		if err != nil && network == "udp" && route.Mode == "socks5" && !errors.Is(err, errAntiFlood) && !errors.Is(err, ErrDenied) {
+			// Many SOCKS5 proxies have no UDP ASSOCIATE, or a relay that drops datagrams.
+			network = "tcp"
+			response, err = m.exchangeDNSForEngine(rt, attempt, network, endpoint, query, engine)
+		}
 		if err != nil {
 			stop()
 			if errors.Is(err, errAntiFlood) || errors.Is(err, ErrDenied) {

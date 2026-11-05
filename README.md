@@ -1,9 +1,9 @@
-> Fork release **0.14.2** adds per-account Soar 0.2.3/0.2.4 selection and panel downgrades.
-> It includes upstream through `1079be8` (panel 0.14.0),
-> updates Soar to v0.2.4 and MasterDnsVPN to release `5f83ee9`, and preserves
-> StormDNS, Cotten Normal/Max, 3–26-character account labels and optional XOR.
+> Fork release **0.14.4** merges upstream through `aa511682` with routing,
+> anti-flood, proxy, CottenDNS connection and signed-update fixes.
+> Preserves StormDNS, Cotten Normal/Max and XOR, 3–26-character account labels,
+> per-account Soar 0.2.3/0.2.4 selection and panel downgrades.
 > Existing account links, keys and subscriptions remain valid.
-> [Release details](docs/RELEASE-panel-0.14.2.md) · [Four-engine guide](docs/MULTI-ENGINE.md).
+> [Release details](docs/RELEASE-panel-0.14.4.md) · [Four-engine guide](docs/MULTI-ENGINE.md).
 
 ![Soar Server and WhiteDNS management dashboard](docs/assets/soar-server-banner.png)
 
@@ -17,7 +17,7 @@
 
 [پراکسی خروجی، پورت‌های Upstream و گزارش ترافیک — فارسی](docs/EGRESS.fa.md) · [English](docs/EGRESS.en.md): راهنمای قدم‌به‌قدم هر چهار موتور، ورودی لوکال Xray/sing-box، فیلتر زمانی و دانلود CSV/JSON.
 
-پنل مدیریت سرور **WhiteDNS 0.14.2** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
+پنل مدیریت سرور **WhiteDNS 0.14.4** با موتورهای **Soar، Cotten، StormDNS و MasterDNS** برای **Ubuntu 22.04/24.04/26.04 یا Debian 12/13، معماری amd64/x86_64 یا arm64/aarch64**.
 
 **CottenDNS** نیز از [فورک سازگار WhiteDNS](https://github.com/WhiteDNS/CottenDns) و با حفظ نام و مجوز نویسندگان اصلی اضافه شده است.
 
@@ -60,7 +60,7 @@ sudo apt-get install -y curl
 
 برای ساب کامل از **[WhiteDNS 1.6.8 یا جدیدتر](https://github.com/WhiteDNS/WhiteDNS-Android/releases/latest)** استفاده کنید. پس از تغییر تنظیمات تونل، ساب را در اپ تازه‌سازی کنید؛ برای لینک مستقیم، پروفایل را دوباره Import کنید. [راهنمای ساب، حجم، انقضا و تعویض لینک](docs/SUBSCRIPTIONS.md) · [گزارش آزمون پنل و اپ](docs/SUBSCRIPTIONS-VERIFICATION-2026-10-18.md).
 
-در فرم حساب می‌توانید Soar، Cotten، MasterDNS یا هر ترکیب از آن‌ها را انتخاب کنید. «هر چهار موتور» یک ساب با سه روش اتصال می‌دهد؛ حجم، انقضا و سرعت مشترک‌اند و رکورد DNS دیگری لازم نیست. حساب‌های موجود انتخاب قبلی خود را حفظ می‌کنند؛ برای افزودن MasterDNS، حساب را ویرایش و سپس ساب را تازه‌سازی کنید. [راهنمای MasterDNS](docs/MASTERDNS.md).
+در فرم حساب می‌توانید Soar، Cotten، StormDNS، MasterDNS یا هر ترکیب از آن‌ها را انتخاب کنید. «هر چهار موتور» یک ساب با چهار روش اتصال می‌دهد؛ حجم، انقضا و سرعت مشترک‌اند و رکورد DNS دیگری لازم نیست. حساب‌های موجود انتخاب قبلی خود را حفظ می‌کنند؛ برای افزودن MasterDNS، حساب را ویرایش و سپس ساب را تازه‌سازی کنید. [راهنمای MasterDNS](docs/MASTERDNS.md).
 
 لینک نصب ثابت است و با انتشار نسخهٔ پایدار جدید به تغییر دستور یا شمارهٔ نسخه نیاز ندارد. نسخه‌های آزمایشی نصب نمی‌شوند؛ اگر یافتن نسخه، دریافت بستهٔ معماری سرور یا بررسی checksum شکست بخورد، نصب پیش از تغییر سرویس متوقف می‌شود و نسخهٔ قدیمی جایگزین نمی‌شود.
 
@@ -75,9 +75,10 @@ sudo apt-get install -y curl
 - حساب مستقل با لینک و QR، حجم مشترک آپلود/دانلود، انقضا، سرعت و سقف جریان TCP؛ قطع اتصال، تعویض کلید و خروجی CSV.
 - ساب مستقل هر حساب با لینک و QR، حجم و انقضا، تازه‌سازی تنظیمات و تعویض آدرس بدون تغییر کلید تونل.
 - تنظیمات پیشرفته با توضیح روی علامت سؤال؛ حالت خودکار، مسیر محدود، متعادل و کارایی بیشتر.
-- پشتیبان، بازیابی و به‌روزرسانی از خود پنل با تأیید رمز مدیر و بازگشت در صورت شکست فعال‌سازی.
+- پشتیبان، بازیابی و به‌روزرسانی از خود پنل با تأیید رمز مدیر و بازگشت در صورت شکست فعال‌سازی. از نسخهٔ 0.14.4 این فورک پنل فقط آپدیت دارای امضای معتبر را نشان می‌دهد و نصب می‌کند؛ نصب اولیه فقط SHA-256 را بررسی می‌کند.
 - دامنه، HTTPS با تمدید خودکار گواهی و مسیر ورود تصادفی؛ تنظیم از پنل یا ترمینال.
 - مسیر مستقل مستقیم، SOCKS5 یا HTTP/HTTPS CONNECT برای هر موتور؛ فهرست/بازه یا پورت آزاد مخصوص مسیر پراکسی، بدون بازکردن پورت‌های مستقیم.
+- اتصال تونل به IP خود سرور به‌طور پیش‌فرض بسته است و از نسخهٔ 0.14.3 می‌توان پورت‌های مشخصی از آن را با آگاهی از ریسک باز کرد. [راهنما](docs/EGRESS.fa.md#اتصال-به-ip-خود-سرور)
 - ثبت اختیاری مقصدهای خروجی با نگهداری محدود، فیلتر تاریخ و ساعت دلخواه و دانلود کامل CSV/JSON؛ پیش‌فرض خاموش. [فارسی](docs/EGRESS.fa.md) · [English](docs/EGRESS.en.md).
 
 نسخهٔ پایدار فقط به‌روزرسانی‌های پایدار را پیشنهاد می‌دهد. کاربران beta8 و جدیدتر می‌توانند از خود پنل به آخرین نسخهٔ پایدار ارتقا دهند؛ نسخه‌های قدیمی‌تر باید یک‌بار نصب‌کنندهٔ بالا را اجرا کنند تا سرویس نگهداری نصب شود. حساب‌ها، کلیدها، مصرف، تنظیمات ذخیره‌شده و مسیر ورود موجود حفظ می‌شوند. پیش از ارتقا پشتیبان بگیرید.
@@ -88,16 +89,16 @@ sudo apt-get install -y curl
 
 ## محدوده و بررسی
 
-این انتشار پایدارِ **پنل مدیریت** است. پورت‌های مقصد پیش‌فرض 80/443 هستند؛ در مسیر پراکسی می‌توان سیاست پورت جدا تعیین کرد. HTTP/HTTPS CONNECT فقط TCP دارد؛ SOCKS5 به پشتیبانی UDP ASSOCIATE در پراکسی نیاز دارد و قابلیت انتقال UDP دلخواه را به موتور یا کلاینت فاقد آن اضافه نمی‌کند. همهٔ بازی‌ها، تماس‌ها و QUIC پوشش داده نمی‌شوند. شمارش جریان TCP معادل شمارش دستگاه نیست و لینک مشترک، هویت مشترک حساب دارد.
+این انتشار پایدارِ **پنل مدیریت** است. پورت‌های مقصد پیش‌فرض 80/443 هستند؛ در مسیر پراکسی می‌توان سیاست پورت جدا تعیین کرد. نام دامنه روی مسیر پراکسی از DNS همان پراکسی می‌گذرد، پس پراکسی باید پورت 53 را به Resolverها اجازه دهد. HTTP/HTTPS CONNECT فقط TCP دارد؛ SOCKS5 به پشتیبانی UDP ASSOCIATE در پراکسی نیاز دارد و قابلیت انتقال UDP دلخواه را به موتور یا کلاینت فاقد آن اضافه نمی‌کند. همهٔ بازی‌ها، تماس‌ها و QUIC پوشش داده نمی‌شوند. شمارش جریان TCP معادل شمارش دستگاه نیست و لینک مشترک، هویت مشترک حساب دارد.
 
-انتشار فقط با اجرای دستی [Build and release WhiteDNS](https://github.com/rjalilocsdg/Soar-Server/actions/workflows/panel.yml) انجام می‌شود: تست‌های Go، race، نصب‌کننده، بازیابی/ارتقا و مرورگر، بیلد و سپس انتشار همان فایل‌ها در یک اجرا. PR، push و تگ بیلد خودکار تکراری راه نمی‌اندازند. [راهنمای انتشار](docs/RELEASING.md) را ببینید. آزمون گوشی فیزیکی، شبکه‌های ایران و بار تولیدی گسترده هنوز کامل نیست. [گزارش اختلال مرورگر](docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md) نتایج و توقف مقطعی مشاهده‌شده را ثبت کرده است؛ پاسخ بررسی ربات آمازون معادل بازشدن کامل فروشگاه نیست.
+انتشار فقط با اجرای دستی [Build and release WhiteDNS](https://github.com/rjalilocsdg/Soar-Server/actions/workflows/panel.yml) انجام می‌شود: تست‌های Go، race، نصب‌کننده، بازیابی/ارتقا و مرورگر، بیلد و سپس انتشار همان فایل‌ها در یک اجرا. PR فقط تست خودکار فقط‌خواندنی اجرا می‌کند و push و تگ بیلد خودکار راه نمی‌اندازند. [راهنمای انتشار](docs/RELEASING.md) را ببینید. آزمون گوشی فیزیکی، شبکه‌های ایران و بار تولیدی گسترده هنوز کامل نیست. [گزارش اختلال مرورگر](docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md) نتایج و توقف مقطعی مشاهده‌شده را ثبت کرده است؛ پاسخ بررسی ربات آمازون معادل بازشدن کامل فروشگاه نیست.
 
 [دانلود نسخهٔ پایدار](https://github.com/rjalilocsdg/Soar-Server/releases/latest) · [معماری](docs/PANEL-DESIGN.md) · [راهنمای کامل](docs/PANEL.fa.md)
 
 ## پروژهٔ اصلی و مجوزها
 
 - [سورس اصلی Lantern Soar](https://github.com/getlantern/soar) · [وب‌سایت رسمی](https://soar.lantern.io/).
-- موتور سمت سرور: [Soar v0.2.2](https://github.com/getlantern/soar/tree/v0.2.2)، تحت [Apache-2.0](https://github.com/getlantern/soar/blob/v0.2.2/LICENSE).
+- موتور سمت سرور: [Soar v0.2.4](https://github.com/getlantern/soar/tree/v0.2.4)، تحت [Apache-2.0](https://github.com/getlantern/soar/blob/v0.2.4/LICENSE).
 - [مجوز این مخزن](LICENSE) · [اعتبار وابستگی‌ها](NOTICE).
 
 ظاهر و گردش کار از [پنل سنایی / 3x-ui](https://github.com/MHSanaei/3x-ui) الهام گرفته‌اند؛ کد و دارایی‌های آن وارد این پروژه نشده‌اند. پنل توسط WhiteDNS مستقل از Lantern و 3x-ui نگهداری می‌شود.

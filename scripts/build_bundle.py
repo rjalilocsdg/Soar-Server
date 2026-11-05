@@ -38,7 +38,7 @@ def main() -> None:
             ["go", "build", "-mod=readonly", "-trimpath", "-buildvcs=false", "-ldflags=-s -w", "-o", str(binaries / program), package],
             cwd=ROOT, env=env, check=True,
         )
-    for name in ("install.sh", "SERVER-GUIDE.fa.md", "SOAR-IRAN-GUIDE.fa.md", "AUDIT-REPORT.md", "TESTING.md", "LICENSE", "NOTICE"):
+    for name in ("install.sh", "SERVER-GUIDE.fa.md", "SOAR-IRAN-GUIDE.fa.md", "TESTING.md", "LICENSE", "NOTICE"):
         content = (ROOT / name).read_text(encoding="utf-8").replace("\r\n", "\n")
         (bundle / name).write_bytes(content.encode("utf-8"))
     licenses = bundle / "licenses"
@@ -78,7 +78,7 @@ def main() -> None:
         f"Toolchain: {run('go', 'version')}\n"
         "Target: linux/amd64; CGO_ENABLED=0\n"
         "Module integrity: pinned go.mod + go.sum; Go checksum database verification\n"
-        "Distribution: WhiteDNS/Soar-Server GitHub release; SHA-256 checksums\n\n"
+        "Distribution: rjalilocsdg/Soar-Server GitHub release; SHA-256 checksums\n\n"
         + run("go", "list", "-m", "all") + "\n"
     )
     (bundle / "SOURCE-VERSIONS.txt").write_bytes(metadata.encode("ascii"))

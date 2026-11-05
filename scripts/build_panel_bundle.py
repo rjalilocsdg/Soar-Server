@@ -15,7 +15,7 @@ import struct
 import tarfile
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION="0.14.2"
+VERSION="0.14.4"
 
 def verify_version():
     for path, pattern in [
@@ -59,7 +59,7 @@ def main():
     for name,package in [("soar-panel","./cmd/soar-panel"),("soar-panel-ops","./cmd/soar-panel-ops"),("soar-check","./cmd/soar-check")]:
         subprocess.run(["go","build","-mod=readonly","-trimpath","-buildvcs=false","-ldflags=-s -w","-o",str(binary/name),package],cwd=ROOT,env=env,check=True)
         verify_binary(binary/name, args.arch)
-    (bundle/"ARCH").write_text(args.arch+"\n", encoding="ascii")
+    (bundle/"ARCH").write_bytes((args.arch+"\n").encode("ascii"))
     for name in ["panel-install.sh","panel-security.sh","panel-menu.sh","LICENSE","NOTICE","docs/EGRESS.fa.md","docs/EGRESS.en.md","docs/SERVER-MENU.fa.md","docs/SERVER-MENU.en.md","docs/PANEL.fa.md","docs/PANEL.en.md","docs/LOCAL-COTTEN.fa.md","docs/DOMAINS.fa.md","docs/SUBSCRIPTIONS.md","docs/TELEGRAM.md","docs/MASTERDNS.md","docs/MULTI-ENGINE.md","docs/MULTI-ENGINE-VALIDATION.md","docs/UPSTREAM-MERGE-VALIDATION.md","docs/PANEL-DESIGN.md","docs/PANEL-TUNING-2026-10-17.fa.md","docs/SOAR-WEB-RELIABILITY-2026-10-18.fa.md"]:
         target=bundle/name;target.parent.mkdir(parents=True,exist_ok=True)
         target.write_bytes((ROOT/name).read_text(encoding="utf8").replace("\r\n","\n").encode("utf8"))

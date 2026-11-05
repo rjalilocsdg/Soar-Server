@@ -7,7 +7,8 @@ For a feature branch, select **verify_only** to run all checks and produce
 artifacts without creating tags or publishing. Publication remains restricted
 to this fork’s `main` branch.
 
-This is the repository's only workflow. PRs, pushes and tags do not start builds.
+This is the repository's only release workflow. PRs run the read-only tests in
+`ci.yml`; they cannot publish. Pushes and tags do not start builds.
 The workflow does not merge PRs. Review and merge the intended changes, update
 the product version and release notes, then trigger it once.
 
@@ -29,6 +30,35 @@ standalone publication does not replace that designation.
 If only publication fails, use **Re-run failed jobs**, not **Re-run all jobs**.
 The release job reuses the successful build jobs' artifacts and can resume its
 partial draft upload. It does not repeat verification or builds.
+
+## Signing panel releases
+
+The release job signs each panel release automatically, right after publishing,
+as `*.tar.gz.sha256.ci.sig`. Anyone who can run this workflow on `main` can publish
+a release panels will install, with no key to handle. The key lives only in the
+`release` GitHub Environment, as `RELEASE_SIGNING_KEY`, restricted to `main`. Add a
+required reviewer to that environment to require a second person's approval.
+
+Keep access small and use two-factor authentication: this signature does not
+protect against a stolen account that can run the workflow. The offline key
+exists for that case and for recovery. Keep it off GitHub, with an offline backup.
+
+This fork starts requiring signatures in 0.14.4 and trusts its own offline and
+workflow keys. Earlier fork versions verify SHA-256 checksums. Sign the checksum
+assets of existing downgrade releases with the fork offline key before offering
+them to the new panel; keep their archives and checksum bytes unchanged.
+
+```sh
+gh release download panel-vVERSION --repo rjalilocsdg/Soar-Server --pattern '*.sha256' --dir sign
+go run ./cmd/soar-release-sign sign OFFLINE_KEY_FILE sign/*.sha256
+gh release upload panel-vVERSION sign/*.sig --repo rjalilocsdg/Soar-Server
+```
+
+If the workflow key leaks: remove it from `releaseSigningKeys` in
+`internal/panel/releases.go`, add a new public key, replace the secret, and sign
+that release with the offline key the same way. Panels then stop trusting the old
+key once updated. The install bootstrap checks SHA-256 only and does not verify
+signatures.
 
 Panel versions must agree in `internal/panel/releases.go`, `panel-install.sh`
 and `scripts/build_panel_bundle.py`; add `docs/RELEASE-panel-VERSION.md`.
