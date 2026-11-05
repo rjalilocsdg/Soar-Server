@@ -157,8 +157,18 @@ func TestAdditionalRoutingNSAndDisabledEngine(t *testing.T) {
 	q = binary.BigEndian.AppendUint16(q, 1)
 	var got []byte
 	m.routeDNS(q, nil, false, func(b []byte) { got = b })
-	if len(got) < 4 || got[3]&15 != 5 {
-		t.Fatal("disabled engine was not refused")
+	// Inactive names inside our delegation get authoritative NODATA. REFUSED
+	// makes recursive resolvers penalize a healthy shared authoritative server.
+	if len(got) < 12 || got[3]&15 != 0 || got[2]&4 == 0 || binary.BigEndian.Uint16(got[6:8]) != 0 || binary.BigEndian.Uint16(got[8:10]) != 1 {
+		t.Fatal("disabled engine must return authoritative NODATA")
+	}
+	m.mu.RLock()
+	disabled := m.accounts[c.ID]
+	m.mu.RUnlock()
+	disabled.additionalMu.Lock()
+	defer disabled.additionalMu.Unlock()
+	if len(disabled.additional) != 0 {
+		t.Fatal("disabled engine was started")
 	}
 }
 
